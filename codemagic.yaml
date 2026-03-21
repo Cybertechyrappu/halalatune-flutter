@@ -1,0 +1,31 @@
+workflows:
+  ios-release-workflow:
+    name: iOS Release Build
+    instance_type: mac_mini_m1
+    max_build_duration: 120
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: flutter packages pub get
+      - name: Install Pods
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Build iOS release
+        script: |
+          # The --no-codesign flag disables code signing so that you can
+          # generate an archive or app bundle without requiring Apple
+          # Developer credentials directly in this basic setup. 
+          # For a real App Store deployment, you will need provisioning profiles.
+          flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/iphoneos/*.app
+      - build/ios/archive/*.xcarchive
+    publishing:
+      email:
+        recipients:
+          - yourmail@example.com
+        notify:
+          success: true
+          failure: false
