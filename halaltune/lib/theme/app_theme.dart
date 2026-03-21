@@ -35,7 +35,7 @@ class AppTheme {
     'others':    Color(0xFF6B7280),
   };
 
-  static final ColorScheme _cs = ColorScheme(
+  static const ColorScheme _cs = ColorScheme(
     brightness: Brightness.dark,
     primary: accent,
     onPrimary: Colors.black,
@@ -79,17 +79,17 @@ class AppTheme {
     highlightColor: Colors.transparent,
     splashColor: Colors.transparent,
 
-    appBarTheme: AppBarTheme(
+    appBarTheme: const AppBarTheme(
       backgroundColor: bg,
       foregroundColor: textPrimary,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: const TextStyle(
+      titleTextStyle: TextStyle(
         fontFamily: 'Outfit', fontSize: 20,
         fontWeight: FontWeight.w700, color: textPrimary,
       ),
-      systemOverlayStyle: const SystemUiOverlayStyle(
+      systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: Colors.transparent,

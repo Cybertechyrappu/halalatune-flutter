@@ -85,10 +85,10 @@ class _AuthScreenState extends State<AuthScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
-                              color: AppTheme.danger.withOpacity(0.1),
+                              color: AppTheme.danger.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                  color: AppTheme.danger.withOpacity(0.3)),
+                                  color: AppTheme.danger.withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               children: [
@@ -270,7 +270,7 @@ class _AuthScreenState extends State<AuthScreen>
       return;
     }
     final sent = await auth.resetPassword(email);
-    if (sent && mounted) {
+    if (sent && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Password reset email sent!'),

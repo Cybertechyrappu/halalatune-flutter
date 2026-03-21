@@ -117,8 +117,9 @@ class _CategoriesTabState extends State<CategoriesTab> {
                 player.setUserId(auth.user?.uid);
                 player.playTrack(
                     newQueue: List.from(tracks), index: tracks.indexOf(track));
-                if (auth.user != null)
+                if (auth.user != null) {
                   lib.addToHistory(auth.user!.uid, track.id);
+                }
               },
               onLike: () => lib.toggleLike(track.id),
             );

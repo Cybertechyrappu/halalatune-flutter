@@ -281,9 +281,9 @@ class _ProgressBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(children: [
         SliderTheme(
-          data: SliderThemeData(
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+          data: const SliderThemeData(
+            thumbShape: RoundSliderThumbShape(enabledThumbRadius: 5),
+            overlayShape: RoundSliderOverlayShape(overlayRadius: 14),
             trackHeight: 3,
             activeTrackColor: AppTheme.accent,
             inactiveTrackColor: AppTheme.surfaceHigh,

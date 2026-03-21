@@ -276,7 +276,7 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.accent.withOpacity(0.15) : AppTheme.surface,
+          color: isActive ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: isActive ? AppTheme.accent : Colors.transparent),
         ),
