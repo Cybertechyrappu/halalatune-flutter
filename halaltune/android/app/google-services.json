@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "159242961546",
+    "project_id": "halaltune-6c908",
+    "storage_bucket": "halaltune-6c908.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:159242961546:android:65bdcd9c3fee61c661e373",
+        "android_client_info": {
+          "package_name": "com.halaltune.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "159242961546-REPLACE_WITH_YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7bc74wJSIRi1_BhDqFjEMG2mE3noBm4g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "159242961546-REPLACE_WITH_YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
