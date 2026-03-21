@@ -1,7 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -41,113 +41,107 @@ class _AuthScreenState extends State<AuthScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.bg,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnim,
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 350),
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF333333)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset('assets/images/icon.png', width: 50, height: 50),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Welcome',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Outfit', // Note: style.css uses 'Roboto' but we keep Outfit for consistency or switch to Roboto? "animations should be same as the script js"
-                      ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 350),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Sign in to save your playlists and\nliked songs across all your devices.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
-                          fontFamily: 'Roboto',
-                          height: 1.5),
-                    ),
-                    const SizedBox(height: 25),
-
-                    Consumer<AuthProvider>(
-                      builder: (context, auth, _) {
-                        return Column(
-                          children: [
-                            if (auth.error != null)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: Text(auth.error!,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                        color: Color(0xFFFF6B6B),
-                                        fontSize: 13,
-                                        height: 1.4,
-                                        fontFamily: 'Roboto')),
-                              ),
-                            
-                            // Google button using yt-primary-btn style
-                            ElevatedButton.icon(
-                              onPressed: _loading ? null : () async {
-                                auth.clearError();
-                                setState(() => _loading = true);
-                                await auth.signInWithGoogle();
-                                if (mounted) setState(() => _loading = false);
-                              },
-                              icon: const _GoogleIcon(),
-                              label: Text(_loading ? 'Signing in...' : 'Continue with Google',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Roboto', color: Colors.black)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black,
-                                minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                elevation: 0,
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 14),
-                            // Divider
-                            Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/images/icontrans.png', width: 60, height: 60),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Welcome',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Roboto',
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          'Sign in to save your playlists and\nliked songs across all your devices.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Color(0xFFAAAAAA),
+                              fontSize: 14,
+                              fontFamily: 'Roboto',
+                              height: 1.5),
+                        ),
+                        const SizedBox(height: 25),
+                        Consumer<AuthProvider>(
+                          builder: (context, auth, _) {
+                            return Column(
                               children: [
-                                Expanded(child: Container(height: 1, color: const Color(0xFF2A2A2A))),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12),
-                                  child: Text('or', style: TextStyle(color: Color(0xFF444444), fontSize: 13, fontFamily: 'Roboto')),
+                                if (auth.error != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Text(auth.error!,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            color: Color(0xFFFF6B6B),
+                                            fontSize: 13,
+                                            height: 1.4,
+                                            fontFamily: 'Roboto')),
+                                  ),
+                                ElevatedButton.icon(
+                                  onPressed: _loading ? null : () async {
+                                    auth.clearError();
+                                    setState(() => _loading = true);
+                                    await auth.signInWithGoogle();
+                                    if (mounted) setState(() => _loading = false);
+                                  },
+                                  icon: const _GoogleIcon(),
+                                  label: Text(_loading ? 'Signing in...' : 'Continue with Google',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Roboto', color: Colors.black)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    minimumSize: const Size(double.infinity, 50),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                    elevation: 0,
+                                  ),
                                 ),
-                                Expanded(child: Container(height: 1, color: const Color(0xFF2A2A2A))),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-
-                            // Email input
-                            _AuthInput(controller: _emailCtrl, hint: 'Email address', obscure: false, onChanged: (_) => auth.clearError()),
-                            const SizedBox(height: 12),
-                            // Pass input
-                            _AuthInput(controller: _passCtrl, hint: 'Password', obscure: true, onChanged: (_) => auth.clearError()),
-                            const SizedBox(height: 12),
-
-                            // Sign in Button
-                            ElevatedButton(
-                              onPressed: _loading ? null : () => _submit(auth),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.black,
-                                minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2))),
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 12),
+                                      child: Text('or', style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 13, fontFamily: 'Roboto')),
+                                    ),
+                                    Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.2))),
+                                  ],
+                                ),
+                                const SizedBox(height: 18),
+                                _AuthInput(controller: _emailCtrl, hint: 'Email address', obscure: false, onChanged: (_) => auth.clearError()),
+                                const SizedBox(height: 12),
+                                _AuthInput(controller: _passCtrl, hint: 'Password', obscure: true, onChanged: (_) => auth.clearError()),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: _loading ? null : () => _submit(auth),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    minimumSize: const Size(double.infinity, 50),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                                 elevation: 0,
                               ),
                               child: Text(
@@ -175,13 +169,15 @@ class _AuthScreenState extends State<AuthScreen>
                       },
                     ),
                   ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+                ), // Column
+              ), // Container
+            ), // BackdropFilter
+          ), // ClipRRect
+        ), // SingleChildScrollView
+      ), // Center
+    ), // FadeTransition
+  ), // SafeArea
+); // Scaffold
   }
 
   Future<void> _submit(AuthProvider auth) async {

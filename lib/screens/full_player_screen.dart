@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +42,7 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
     super.dispose();
   }
 
-  void _showLyricsSheet(BuildContext context) {
+  void _showLyricsSheet(BuildContext context, [String title = 'Lyrics']) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -59,15 +60,15 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
             const SizedBox(height: 12),
             Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF666666), borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
-            const Text('Lyrics', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(title, style: const TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 controller: scrollCtrl,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                children: const [
-                  Text('Lyrics are currently unavailable for this track.\n\n\n\n\n\n(Feature coming soon)',
-                    style: TextStyle(fontFamily: 'Roboto', fontSize: 16, height: 2.0, color: Color(0xFFAAAAAA)),
+                children: [
+                  Text('$title are currently unavailable for this track.\n\n\n\n\n\n(Feature coming soon)',
+                    style: const TextStyle(fontFamily: 'Roboto', fontSize: 16, height: 2.0, color: Color(0xFFAAAAAA)),
                     textAlign: TextAlign.center,
                   )
                 ],
@@ -158,18 +159,35 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
                   // Download button
                   _SecondaryControls(track: track, player: player),
                   const Spacer(),
-                  // Lyrics sliding panel imitation
-                  GestureDetector(
-                    onTap: () => _showLyricsSheet(context),
-                    child: Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  // Bottom segmented sliding panel triggers
+                  Container(
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                        child: Row(
+                          children: [
+                            Expanded(child: GestureDetector(
+                              onTap: () => _showLyricsSheet(context, 'Up Next'),
+                              child: Container(color: Colors.transparent, alignment: Alignment.center, child: const Text('UP NEXT', style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600))),
+                            )),
+                            Expanded(child: GestureDetector(
+                              onTap: () => _showLyricsSheet(context, 'Lyrics'),
+                              child: Container(color: Colors.transparent, alignment: Alignment.center, child: const Text('LYRICS', style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600))),
+                            )),
+                            Expanded(child: GestureDetector(
+                              onTap: () => _showLyricsSheet(context, 'Related'),
+                              child: Container(color: Colors.transparent, alignment: Alignment.center, child: const Text('RELATED', style: TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600))),
+                            )),
+                          ],
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: const Text('Lyrics', style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ]),
@@ -190,7 +208,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -199,11 +217,7 @@ class _Header extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             splashRadius: 24,
           ),
-          IconButton(
-            icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
-            onPressed: () {},
-            splashRadius: 24,
-          ),
+          const SizedBox(width: 48), // Balancing space from missing dots
         ]
       ),
     );
@@ -406,65 +420,74 @@ class _SecondaryControls extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        // Download
-        _DownloadButton(track: track, dl: dl, status: status),
+        // Download Glass Pill
+        _GlassPillBtn(
+          icon: status == DownloadStatus.downloaded ? Icons.check_circle_rounded
+               : status == DownloadStatus.error ? Icons.error_outline_rounded : Icons.download_rounded,
+          label: status == DownloadStatus.downloading ? 'Downloading' : 'Download',
+          color: status == DownloadStatus.error ? Colors.red : Colors.white,
+          onTap: () {
+            if (status == DownloadStatus.downloaded) {
+              dl.deleteDownload(track.id);
+            } else if (status != DownloadStatus.downloading) {
+              dl.download(track);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloading "${track.title}"…', style: const TextStyle(fontFamily: 'Roboto'))));
+            } else {
+              dl.cancel(track.id);
+            }
+          },
+          child: status == DownloadStatus.downloading
+             ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(value: dl.progressOf(track.id), strokeWidth: 2, color: Colors.white))
+             : null,
+        ),
+        const SizedBox(width: 16),
+        // Share Glass Pill
+        _GlassPillBtn(
+          icon: Icons.share_rounded,
+          label: 'Share',
+          color: Colors.white,
+          onTap: () {},
+        ),
       ]),
     );
   }
 }
 
-
-class _DownloadButton extends StatelessWidget {
-  final Track track;
-  final DownloadService dl;
-  final DownloadStatus status;
-  const _DownloadButton({required this.track, required this.dl, required this.status});
+class _GlassPillBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final Widget? child;
+  const _GlassPillBtn({required this.icon, required this.label, required this.color, required this.onTap, this.child});
 
   @override
   Widget build(BuildContext context) {
-    switch (status) {
-      case DownloadStatus.notDownloaded:
-      case DownloadStatus.error:
-        return IconButton(
-          icon: Icon(Icons.arrow_circle_down_rounded,
-            color: status == DownloadStatus.error ? Colors.red : Colors.white,
-            size: 30),
-          onPressed: () {
-            dl.download(track);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Downloading "${track.title}"…',
-                style: const TextStyle(fontFamily: 'Roboto'))),
-            );
-          },
-          splashRadius: 24,
-        );
-      case DownloadStatus.downloading:
-        return SizedBox(
-          width: 48, height: 48,
-          child: Center(
-            child: GestureDetector(
-              onTap: () => dl.cancel(track.id),
-              child: Stack(alignment: Alignment.center, children: [
-                SizedBox(
-                  width: 28, height: 28,
-                  child: CircularProgressIndicator(
-                    value: dl.progressOf(track.id),
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ),
-                const Icon(Icons.close_rounded, color: Colors.white, size: 14),
-              ]),
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                child ?? Icon(icon, color: color, size: 20),
+                const SizedBox(width: 6),
+                Text(label, style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
+              ],
             ),
           ),
-        );
-      case DownloadStatus.downloaded:
-        return IconButton(
-          icon: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 30),
-          onPressed: () => dl.deleteDownload(track.id),
-          splashRadius: 24,
-        );
-    }
+        ),
+      ),
+    );
   }
 }
 

@@ -30,10 +30,17 @@ class _HomeTabState extends State<HomeTab> {
         _sdPicks ??= lib.getSpeedDial();
 
         return Scaffold(
-          backgroundColor: AppTheme.bg,
-          body: CustomScrollView(
-            physics: const BouncingScrollPhysics(decelerationRate: ScrollDecelerationRate.fast),
-            slivers: [
+          backgroundColor: Colors.black,
+          body: RefreshIndicator(
+            color: Colors.white,
+            backgroundColor: const Color(0xFF1E1E1E),
+            onRefresh: () async {
+              await Future.delayed(const Duration(milliseconds: 800));
+              setState(() { _sdPicks = null; });
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics(decelerationRate: ScrollDecelerationRate.fast)),
+              slivers: [
               // ── App Bar ──────────────────────────────────────────────────
               SliverAppBar(
                 floating: true,
@@ -110,8 +117,9 @@ class _HomeTabState extends State<HomeTab> {
               const SliverToBoxAdapter(child: SizedBox(height: 110)),
             ],
           ),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
@@ -216,13 +224,10 @@ class _RecentsStrip extends StatelessWidget {
                     Container(
                       width: cardSize, height: cardSize,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.42),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(10)),
-                      child: Container(
-                        width: 42, height: 42,
-                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(blurRadius: 14, color: Colors.black54, offset: Offset(0, 4))]),
-                        child: const Icon(Icons.pause_rounded, color: Colors.black, size: 20),
-                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.pause_rounded, color: Colors.white, size: 48),
                     ),
                 ]),
                 const SizedBox(height: 8),
