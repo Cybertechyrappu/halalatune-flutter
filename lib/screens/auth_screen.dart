@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -48,22 +47,18 @@ class _AuthScreenState extends State<AuthScreen>
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    width: double.infinity,
-                    constraints: const BoxConstraints(maxWidth: 350),
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 350),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111111),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                         Image.asset('assets/images/icontrans.png', width: 60, height: 60),
                         const SizedBox(height: 20),
                         const Text(
@@ -171,13 +166,11 @@ class _AuthScreenState extends State<AuthScreen>
                   ],
                 ), // Column
               ), // Container
-            ), // BackdropFilter
-          ), // ClipRRect
-        ), // SingleChildScrollView
-      ), // Center
-    ), // FadeTransition
-  ), // SafeArea
-); // Scaffold
+            ), // SingleChildScrollView
+          ), // Center
+        ), // FadeTransition
+      ), // SafeArea
+    ); // Scaffold
   }
 
   Future<void> _submit(AuthProvider auth) async {

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/track.dart';
@@ -103,17 +102,12 @@ class TrackListItem extends StatelessWidget {
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: isPlaying ? 0.12 : 0.06),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  color: isPlaying ? const Color(0xFF2A2A2A) : const Color(0xFF161616),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Row(children: [
           // Artwork + playing overlay
@@ -171,8 +165,6 @@ class TrackListItem extends StatelessWidget {
             ),
           ],
         ]),
-              ),
-            ),
           ),
         ),
     );
