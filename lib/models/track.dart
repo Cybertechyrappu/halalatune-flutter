@@ -59,6 +59,24 @@ class Track {
     );
   }
 
+  factory Track.fromMap(Map<String, dynamic> data) {
+    return Track(
+      id: data['id'] as String,
+      title: data['title'] ?? 'Unknown Title',
+      artist: data['artist'] ?? 'Unknown Artist',
+      url: data['url'] ?? '',
+      coverArt: data['coverArt'],
+      language: data['language'] ?? 'others',
+      streamCount: (data['streamCount'] ?? 0) as int,
+      likeCount: (data['likeCount'] ?? 0) as int,
+      downloadCount: (data['downloadCount'] ?? 0) as int,
+      lyrics: data['lyrics'],
+      lyricsProvider: data['lyricsProvider'],
+      lyricsProviderUrl: data['lyricsProviderUrl'],
+      lyricsRedirectUrl: data['lyricsRedirectUrl'],
+    );
+  }
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'title': title,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:audio_service/audio_service.dart';
@@ -28,16 +29,24 @@ void main() async {
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyD7bc74wJSIRi1_BhDqFjEMG2mE3noBm4g",
-      authDomain: "halaltune-6c908.firebaseapp.com",
-      projectId: "halaltune-6c908",
-      storageBucket: "halaltune-6c908.firebasestorage.app",
-      messagingSenderId: "159242961546",
-      appId: "1:159242961546:web:65bdcd9c3fee61c661e373",
-    ),
-  );
+  try {
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: "AIzaSyD7bc74wJSIRi1_BhDqFjEMG2mE3noBm4g",
+          authDomain: "halaltune-6c908.firebaseapp.com",
+          projectId: "halaltune-6c908",
+          storageBucket: "halaltune-6c908.firebasestorage.app",
+          messagingSenderId: "159242961546",
+          appId: "1:159242961546:web:65bdcd9c3fee61c661e373",
+        ),
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
 
   _audioHandler = await AudioService.init(
     builder: () => HalalTuneAudioHandler(),
@@ -47,7 +56,7 @@ void main() async {
       androidNotificationOngoing: true,
       androidShowNotificationBadge: false,
       // Use the transparent notification icon from drawable/
-      androidNotificationIcon: 'drawable/notification_icon',
+      androidNotificationIcon: 'drawable/icontrans',
       artDownscaleWidth: 300,
       artDownscaleHeight: 300,
       preloadArtwork: true,
@@ -160,25 +169,52 @@ class _RootRouterState extends State<_RootRouter> with SingleTickerProviderState
 }
 
 // ── Splash ─────────────────────────────────────────────────────────────────────
-class _SplashScreen extends StatelessWidget {
+class _SplashScreen extends StatefulWidget {
   const _SplashScreen();
   @override
+  State<_SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<_SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: AppTheme.bg,
+    return Scaffold(
+      backgroundColor: Colors.black, // #000 in CSS
       body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _AppLogo(size: 80),
-          SizedBox(height: 20),
-          Text('HalalTune', style: TextStyle(
-            fontFamily: 'Outfit', fontSize: 24, fontWeight: FontWeight.w800,
-            color: AppTheme.textPrimary,
-          )),
-          SizedBox(height: 40),
-          SizedBox(width: 20, height: 20, child: CircularProgressIndicator(
-            strokeWidth: 1.5, color: AppTheme.accent,
-          )),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Pulse animation for logo
+            ScaleTransition(
+              scale: Tween<double>(begin: 1.0, end: 1.06).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut)),
+              child: FadeTransition(
+                opacity: Tween<double>(begin: 0.7, end: 1.0).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut)),
+                child: const _AppLogo(size: 72, radius: 16),
+              ),
+            ),
+            const SizedBox(height: 28),
+            // Custom CSS Spinner
+            SizedBox(
+              width: 28, height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.7)),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -194,94 +230,101 @@ class _IntroScreen extends StatefulWidget {
 class _IntroScreenState extends State<_IntroScreen> with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _fade;
+  late Animation<Offset> _slide;
   bool _goingToAuth = false;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _fade = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _slide = Tween<Offset>(begin: const Offset(0, 0), end: const Offset(0, -0.05)).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeIn));
     _ctrl.forward();
   }
 
   @override
   void dispose() { _ctrl.dispose(); super.dispose(); }
 
+  void _goToAuth() {
+    _ctrl.reverse().then((_) {
+      if (mounted) setState(() => _goingToAuth = true);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_goingToAuth) return const AuthScreen();
+    if (_goingToAuth) {
+      // Replicate GSAP y: 50 -> 0 slide-up auth transition
+      return TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutCubic,
+        tween: Tween(begin: 0.0, end: 1.0),
+        builder: (context, val, child) {
+          return Opacity(
+            opacity: val,
+            child: Transform.translate(
+              offset: Offset(0, 50 * (1 - val)),
+              child: const AuthScreen(),
+            ),
+          );
+        },
+      );
+    }
     return Scaffold(
-      backgroundColor: AppTheme.bg,
+      backgroundColor: Colors.black, // #000 in css
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fade,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28),
-            child: Column(
-              children: [
-                const Spacer(flex: 3),
-                const _AppLogo(size: 100),
-                const SizedBox(height: 24),
-                const Text('HalalTune', style: TextStyle(
-                  fontFamily: 'Outfit', fontSize: 30, fontWeight: FontWeight.w800,
-                  color: AppTheme.textPrimary, letterSpacing: -0.5,
-                )),
-                const SizedBox(height: 10),
-                const Text('Pure, distraction-free Islamic audio.\nNasheeds · Recitations · Anasheed',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontFamily:'Outfit', fontSize:14, color:AppTheme.textSecondary, height:1.6),
-                ),
-                const Spacer(flex: 2),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _chip(Icons.music_note_rounded, 'Nasheeds'),
-                  const SizedBox(width: 8),
-                  _chip(Icons.favorite_rounded, 'Halal only'),
-                  const SizedBox(width: 8),
-                  _chip(Icons.offline_bolt_rounded, 'Offline'),
-                ]),
-                const SizedBox(height: 36),
-                FilledButton(
-                  onPressed: () => setState(() => _goingToAuth = true),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 52),
-                    backgroundColor: AppTheme.accent,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, fontFamily: 'Outfit'),
+        child: SlideTransition(
+          position: _slide,
+          child: FadeTransition(
+            opacity: _fade,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const _AppLogo(size: 100, radius: 22),
+                  const SizedBox(height: 20),
+                  const Text('HalalTune', style: TextStyle(
+                    fontFamily: 'Roboto', fontSize: 40, fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary, letterSpacing: -0.5,
+                  )),
+                  const SizedBox(height: 10),
+                  const Text('Pure, distraction-free Islamic audio.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontFamily:'Roboto', fontSize:16, color:AppTheme.textSecondary, height:1.5),
                   ),
-                  child: const Text('Get Started'),
-                ),
-                const SizedBox(height: 32),
-              ],
+                  const SizedBox(height: 40),
+                  ElevatedButton(
+                    onPressed: () => _goToAuth(),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    child: const Text('Get Started', style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Roboto'
+                    )),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
-
-  Widget _chip(IconData icon, String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-    decoration: BoxDecoration(
-      color: AppTheme.bgElevated,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppTheme.surfaceHigh),
-    ),
-    child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(icon, color: AppTheme.textSecondary, size: 13),
-      const SizedBox(width: 5),
-      Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11, fontFamily: 'Outfit')),
-    ]),
-  );
 }
 
 class _AppLogo extends StatelessWidget {
   final double size;
-  const _AppLogo({required this.size});
+  final double radius;
+  const _AppLogo({required this.size, required this.radius});
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(size * 0.22),
+      borderRadius: BorderRadius.circular(radius),
       child: Image.asset('assets/images/icon.png', width: size, height: size, fit: BoxFit.cover),
     );
   }

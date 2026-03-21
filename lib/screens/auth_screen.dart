@@ -19,7 +19,6 @@ class _AuthScreenState extends State<AuthScreen>
   final _passCtrl = TextEditingController();
   bool _isSignUp = false;
   bool _loading = false;
-  bool _obscurePass = true;
 
   @override
   void initState() {
@@ -46,199 +45,138 @@ class _AuthScreenState extends State<AuthScreen>
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnim,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                const SizedBox(height: 32),
-                // Logo
-                Image.asset('assets/images/icon.png', width: 80, height: 80),
-                const SizedBox(height: 20),
-                const Text(
-                  'HalalTune',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    fontFamily: 'Outfit',
-                  ),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(maxWidth: 350),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF333333)),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sign in to save your playlists and\nliked songs across all your devices.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                      fontFamily: 'Outfit',
-                      height: 1.5),
-                ),
-                const SizedBox(height: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('assets/images/icon.png', width: 50, height: 50),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Welcome',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Outfit', // Note: style.css uses 'Roboto' but we keep Outfit for consistency or switch to Roboto? "animations should be same as the script js"
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Sign in to save your playlists and\nliked songs across all your devices.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                          fontFamily: 'Roboto',
+                          height: 1.5),
+                    ),
+                    const SizedBox(height: 25),
 
-                // Google sign in
-                Consumer<AuthProvider>(
-                  builder: (context, auth, _) {
-                    return Column(
-                      children: [
-                        if (auth.error != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: AppTheme.danger.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: AppTheme.danger.withValues(alpha: 0.3)),
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        return Column(
+                          children: [
+                            if (auth.error != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Text(auth.error!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                        color: Color(0xFFFF6B6B),
+                                        fontSize: 13,
+                                        height: 1.4,
+                                        fontFamily: 'Roboto')),
+                              ),
+                            
+                            // Google button using yt-primary-btn style
+                            ElevatedButton.icon(
+                              onPressed: _loading ? null : () async {
+                                auth.clearError();
+                                setState(() => _loading = true);
+                                await auth.signInWithGoogle();
+                                if (mounted) setState(() => _loading = false);
+                              },
+                              icon: const _GoogleIcon(),
+                              label: Text(_loading ? 'Signing in...' : 'Continue with Google',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, fontFamily: 'Roboto', color: Colors.black)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                minimumSize: const Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                elevation: 0,
+                              ),
                             ),
-                            child: Row(
+                            
+                            const SizedBox(height: 14),
+                            // Divider
+                            Row(
                               children: [
-                                const Icon(Icons.error_outline_rounded,
-                                    color: AppTheme.danger, size: 16),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                    child: Text(auth.error!,
-                                        style: const TextStyle(
-                                            color: AppTheme.danger,
-                                            fontSize: 13,
-                                            fontFamily: 'Outfit'))),
+                                Expanded(child: Container(height: 1, color: const Color(0xFF2A2A2A))),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text('or', style: TextStyle(color: Color(0xFF444444), fontSize: 13, fontFamily: 'Roboto')),
+                                ),
+                                Expanded(child: Container(height: 1, color: const Color(0xFF2A2A2A))),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        // Google button
-                        _GoogleButton(onTap: () async {
-                          auth.clearError();
-                          setState(() => _loading = true);
-                          await auth.signInWithGoogle();
-                          setState(() => _loading = false);
-                        }),
-                        const SizedBox(height: 20),
+                            const SizedBox(height: 18),
 
-                        // Divider
-                        const Row(
-                          children: [
-                            Expanded(
-                                child: Divider(
-                                    color: AppTheme.surface, thickness: 1)),
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: Text('or',
-                                  style: TextStyle(
-                                      color: AppTheme.textDim,
-                                      fontFamily: 'Outfit')),
+                            // Email input
+                            _AuthInput(controller: _emailCtrl, hint: 'Email address', obscure: false, onChanged: (_) => auth.clearError()),
+                            const SizedBox(height: 12),
+                            // Pass input
+                            _AuthInput(controller: _passCtrl, hint: 'Password', obscure: true, onChanged: (_) => auth.clearError()),
+                            const SizedBox(height: 12),
+
+                            // Sign in Button
+                            ElevatedButton(
+                              onPressed: _loading ? null : () => _submit(auth),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                minimumSize: const Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                _isSignUp ? 'Creating account...' : 'Sign In',
+                                style: const TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w600, fontSize: 16),
+                              ),
                             ),
-                            Expanded(
-                                child: Divider(
-                                    color: AppTheme.surface, thickness: 1)),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
+                            const SizedBox(height: 10),
 
-                        // Email input
-                        TextField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontFamily: 'Outfit'),
-                          decoration: const InputDecoration(
-                            hintText: 'Email address',
-                            prefixIcon: Icon(Icons.email_outlined,
-                                color: AppTheme.textDim, size: 20),
-                          ),
-                          onChanged: (_) => auth.clearError(),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Password input
-                        TextField(
-                          controller: _passCtrl,
-                          obscureText: _obscurePass,
-                          style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontFamily: 'Outfit'),
-                          decoration: InputDecoration(
-                            hintText: 'Password',
-                            prefixIcon: const Icon(Icons.lock_outline_rounded,
-                                color: AppTheme.textDim, size: 20),
-                            suffixIcon: GestureDetector(
-                              onTap: () =>
-                                  setState(() => _obscurePass = !_obscurePass),
-                              child: Icon(
-                                  _obscurePass
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                  color: AppTheme.textDim,
-                                  size: 20),
-                            ),
-                          ),
-                          onChanged: (_) => auth.clearError(),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Sign in / Sign up button
-                        ElevatedButton(
-                          onPressed: _loading ? null : () => _submit(auth),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
-                            backgroundColor: AppTheme.accent,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: _loading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.black, strokeWidth: 2))
-                              : Text(
-                                  _isSignUp ? 'Create Account' : 'Sign In',
-                                  style: const TextStyle(
-                                      fontFamily: 'Outfit',
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 15),
-                                ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Toggle sign up / sign in
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            TextButton(
-                              onPressed: () {
+                            // Action buttons
+                            _AuthLinkBtn(
+                              text: _isSignUp ? 'Back to Sign In' : 'Create account',
+                              onTap: () {
                                 setState(() => _isSignUp = !_isSignUp);
                                 auth.clearError();
                               },
-                              child: Text(
-                                _isSignUp
-                                    ? 'Already have an account? Sign In'
-                                    : 'New here? Create account',
-                                style: const TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontFamily: 'Outfit',
-                                    fontSize: 13),
-                              ),
                             ),
+                            if (!_isSignUp)
+                              _AuthLinkBtn(
+                                text: 'Forgot password?',
+                                onTap: () => _forgotPassword(context, auth),
+                              ),
                           ],
-                        ),
-
-                        if (!_isSignUp)
-                          TextButton(
-                            onPressed: () => _forgotPassword(context, auth),
-                            child: const Text('Forgot password?',
-                                style: TextStyle(
-                                    color: AppTheme.textDim,
-                                    fontFamily: 'Outfit',
-                                    fontSize: 13)),
-                          ),
-                      ],
-                    );
-                  },
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -256,62 +194,71 @@ class _AuthScreenState extends State<AuthScreen>
     } else {
       await auth.signInWithEmail(email, pass);
     }
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   void _forgotPassword(BuildContext context, AuthProvider auth) async {
     final email = _emailCtrl.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Enter your email address first.'),
-            backgroundColor: AppTheme.bgElevated),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter your email address first.')));
       return;
     }
-    final sent = await auth.resetPassword(email);
-    if (sent && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Password reset email sent!'),
-            backgroundColor: AppTheme.bgElevated),
-      );
+    await auth.resetPassword(email);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset email sent!')));
     }
   }
 }
 
-class _GoogleButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _GoogleButton({required this.onTap});
+class _AuthInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool obscure;
+  final Function(String) onChanged;
+
+  const _AuthInput({required this.controller, required this.hint, required this.obscure, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0A0A),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        onChanged: onChanged,
+        style: const TextStyle(color: Colors.white, fontSize: 15, fontFamily: 'Roboto'),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFF444444)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+          isDense: true,
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthLinkBtn extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  const _AuthLinkBtn({required this.text, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
       onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.surfaceHigh),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _GoogleIcon(),
-            SizedBox(width: 12),
-            Text(
-              'Continue with Google',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Outfit',
-              ),
-            ),
-          ],
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        alignment: Alignment.center,
+        child: Text(text, style: const TextStyle(color: Color(0xFF666666), fontSize: 13, fontFamily: 'Roboto')),
       ),
     );
   }
@@ -319,12 +266,11 @@ class _GoogleButton extends StatelessWidget {
 
 class _GoogleIcon extends StatelessWidget {
   const _GoogleIcon();
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 20,
-      height: 20,
+      width: 18,
+      height: 18,
       child: CustomPaint(painter: _GoogleLogoPainter()),
     );
   }
@@ -337,32 +283,16 @@ class _GoogleLogoPainter extends CustomPainter {
     final cx = size.width / 2;
     final cy = size.height / 2;
     final r = size.width / 2;
-
-    // Simple G approximation using colored arc segments
-    final colors = [
-      const Color(0xFF4285F4),
-      const Color(0xFF34A853),
-      const Color(0xFFFBBC05),
-      const Color(0xFFEA4335)
-    ];
+    final colors = [const Color(0xFF4285F4), const Color(0xFF34A853), const Color(0xFFFBBC05), const Color(0xFFEA4335)];
     for (int i = 0; i < 4; i++) {
       paint.color = colors[i];
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(cx, cy), radius: r),
-        (i * 90 - 45) * 3.14159 / 180,
-        90 * 3.14159 / 180,
-        true,
-        paint,
-      );
+      canvas.drawArc(Rect.fromCircle(center: Offset(cx, cy), radius: r), (i * 90 - 45) * 3.14159 / 180, 90 * 3.14159 / 180, true, paint);
     }
-    // White center
     paint.color = Colors.white;
     canvas.drawCircle(Offset(cx, cy), r * 0.6, paint);
-    // Blue right cutout
     paint.color = const Color(0xFF4285F4);
     canvas.drawRect(Rect.fromLTWH(cx, cy - r * 0.3, r, r * 0.6), paint);
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

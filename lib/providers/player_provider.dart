@@ -47,7 +47,8 @@ class PlayerProvider extends ChangeNotifier {
     _player.playerStateStream.listen(_onPlayerState);
     _player.positionStream.listen((pos) {
       _position = pos;
-      _pushPlaybackState();
+      // Do not pushPlaybackState here! AudioService creates its own interpolated position.
+      // Spamming it here will break Android lock screen seekbars.
       notifyListeners();
     });
     _player.durationStream.listen((dur) {

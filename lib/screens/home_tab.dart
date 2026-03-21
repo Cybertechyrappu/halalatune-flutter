@@ -115,32 +115,44 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  SliverToBoxAdapter _sectionHeader(String title, {VoidCallback? onShowAll, IconData? icon}) {
+  SliverToBoxAdapter _sectionHeader(String title, {VoidCallback? onShowAll, IconData? icon, bool isHero = false}) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 12, 10),
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(children: [
-            if (icon != null) ...[
-              Icon(icon, color: AppTheme.accent, size: 18),
-              const SizedBox(width: 6),
-            ] else ...[
-              Container(width: 3, height: 16,
-                decoration: BoxDecoration(color: AppTheme.accent, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(width: 8),
-            ],
-            Text(title, style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 17, fontWeight: FontWeight.w700, color: AppTheme.textPrimary,
-            )),
-          ]),
-          if (onShowAll != null)
-            TextButton(
-              onPressed: onShowAll,
-              style: TextButton.styleFrom(foregroundColor: AppTheme.textSecondary,
-                padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-              child: const Text('Show all', style: TextStyle(fontFamily: 'Outfit', fontSize: 12)),
-            ),
-        ]),
+        padding: const EdgeInsets.fromLTRB(16, 4, 12, 14),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Row(children: [
+              if (icon != null) ...[
+                Container(
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
+                  child: Icon(icon, color: Colors.white.withValues(alpha: 0.7), size: 14),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(title, style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: isHero ? 24 : 16,
+                fontWeight: isHero ? FontWeight.w800 : FontWeight.w700,
+                color: Colors.white,
+                letterSpacing: isHero ? -0.3 : 0.3,
+              )),
+            ]),
+            if (onShowAll != null)
+              TextButton(
+                onPressed: onShowAll,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFAAAAAA),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('Show all', style: TextStyle(fontFamily: 'Roboto', fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -156,8 +168,12 @@ class _RecentsStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Media query to check width for responsive card size (130 desktop, 116 mobile)
+    final isMobile = MediaQuery.of(context).size.width <= 480;
+    final cardSize = isMobile ? 116.0 : 130.0;
+
     return SizedBox(
-      height: 112,
+      height: cardSize + 45, // height of art + space for text
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -173,32 +189,55 @@ class _RecentsStrip extends StatelessWidget {
               player.playTrack(newQueue: List.from(tracks), index: i);
               if (auth.user != null) lib.addToHistory(auth.user!.uid, t.id);
             },
-            child: SizedBox(
-              width: 78, 
-              child: Column(children: [
+            child: Container(
+              width: cardSize,
+              margin: const EdgeInsets.only(right: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Stack(alignment: Alignment.center, children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                  Container(
+                    width: cardSize, height: cardSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [BoxShadow(blurRadius: 16, color: Colors.black45, offset: Offset(0, 4))],
+                      color: const Color(0xFF1E1E1E),
+                    ),
+                    clipBehavior: Clip.antiAlias,
                     child: (t.coverArt != null && t.coverArt!.startsWith('http'))
-                        ? CachedNetworkImage(imageUrl: t.coverArt!, width: 70, height: 70, memCacheWidth: 210, fit: BoxFit.cover)
-                        : Container(width: 70, height: 70, color: AppTheme.bgElevated,
-                            child: const Icon(Icons.music_note_rounded, color: AppTheme.textDim, size: 28)),
+                        ? CachedNetworkImage(imageUrl: t.coverArt!, width: cardSize, height: cardSize, memCacheWidth: (cardSize*3).toInt(), fit: BoxFit.cover)
+                        : Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(colors: [Color(0xFF1a1a2e), Color(0xFF0f3460)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                            ),
+                            child: const Icon(Icons.music_note_rounded, color: Colors.white24, size: 40)),
                   ),
                   if (playing)
                     Container(
-                      width: 70, height: 70,
+                      width: cardSize, height: cardSize,
                       decoration: BoxDecoration(
-                        color: Colors.black54,
+                        color: Colors.black.withValues(alpha: 0.42),
                         borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.pause_rounded, color: AppTheme.accent, size: 26),
+                      child: Container(
+                        width: 42, height: 42,
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(blurRadius: 14, color: Colors.black54, offset: Offset(0, 4))]),
+                        child: const Icon(Icons.pause_rounded, color: Colors.black, size: 20),
+                      ),
                     ),
                 ]),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Text(t.title,
-                    style: const TextStyle(fontFamily: 'Outfit', fontSize: 10, color: AppTheme.textSecondary),
-                    maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+                    style: const TextStyle(fontFamily: 'Roboto', fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Text(t.artist,
+                    style: const TextStyle(fontFamily: 'Roboto', fontSize: 11.5, color: Color(0xFFAAAAAA)),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ]),
             ),
@@ -225,7 +264,8 @@ class _SpeedDialGrid extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3, mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 0.85,
+          // 3-column grid, 1:1 aspect ratio
+          crossAxisCount: 3, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 1.0,
         ),
         itemCount: picks.length,
         itemBuilder: (_, i) {
@@ -238,29 +278,63 @@ class _SpeedDialGrid extends StatelessWidget {
               player.playTrack(newQueue: List.from(picks), index: i);
               if (auth.user != null) lib.addToHistory(auth.user!.uid, t.id);
             },
-            child: Column(children: [
-              Expanded(child: Stack(alignment: Alignment.center, children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: (t.coverArt != null && t.coverArt!.startsWith('http'))
-                      ? CachedNetworkImage(imageUrl: t.coverArt!, width: double.infinity, height: double.infinity, memCacheWidth: 450, fit: BoxFit.cover)
-                      : Container(color: AppTheme.bgElevated,
-                          child: const Icon(Icons.music_note_rounded, color: AppTheme.textDim, size: 32)),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(playing ? 130 : 80),
-                    borderRadius: BorderRadius.circular(10)),
-                  child: Icon(
-                    playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    color: playing ? AppTheme.accent : Colors.white, size: 30),
-                ),
-              ])),
-              const SizedBox(height: 5),
-              Text(t.title,
-                style: const TextStyle(fontFamily: 'Outfit', fontSize: 10, color: AppTheme.textSecondary),
-                maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
-            ]),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF1a1a1a),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Artwork
+                  if (t.coverArt != null && t.coverArt!.startsWith('http'))
+                    CachedNetworkImage(imageUrl: t.coverArt!, memCacheWidth: 300, fit: BoxFit.cover)
+                  else
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(colors: [Color(0xFF1a1a2e), Color(0xFF16213e), Color(0xFF0f3460)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                      ),
+                      child: const Center(child: Icon(Icons.music_note_rounded, color: Colors.white24, size: 36)),
+                    ),
+                  
+                  // Play ring (only visible if playing. On web it shows on hover too, but mobile has no hover)
+                  if (playing)
+                    Container(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 40, height: 40,
+                        decoration: const BoxDecoration(color: Color(0xEBFFFFFF), shape: BoxShape.circle, boxShadow: [BoxShadow(blurRadius: 16, color: Colors.black45, offset: Offset(0, 4))]),
+                        child: const Icon(Icons.pause_rounded, color: Colors.black, size: 20),
+                      ),
+                    ),
+
+                  // Title Bar overlay at bottom
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(8, 20, 8, 8),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black87],
+                          stops: [0.0, 1.0],
+                        ),
+                      ),
+                      child: Text(t.title,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto', fontSize: 11.5, fontWeight: FontWeight.w600, color: Colors.white,
+                          shadows: [Shadow(blurRadius: 4, color: Colors.black87, offset: Offset(0, 1))]
+                        ),
+                        maxLines: 2, overflow: TextOverflow.ellipsis),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/track.dart';
-import '../theme/app_theme.dart';
 
 // ── Track Artwork ─────────────────────────────────────────────────────────────
 class TrackArtwork extends StatelessWidget {
@@ -33,8 +32,8 @@ class TrackArtwork extends StatelessWidget {
     borderRadius: BorderRadius.circular(borderRadius),
     child: Container(
       width: size, height: size,
-      color: AppTheme.bgElevated,
-      child: Icon(Icons.music_note_rounded, color: AppTheme.textDim, size: size * 0.4),
+      color: const Color(0xFF1E1E1E),
+      child: Icon(Icons.music_note_rounded, color: const Color(0xFF666666), size: size * 0.4),
     ),
   );
 }
@@ -48,9 +47,17 @@ class LangBadge extends StatelessWidget {
     'arabic': 'ARA', 'malayalam': 'MAL', 'english': 'ENG', 'urdu': 'URD', 'others': 'OTH',
   };
 
+  static const _langColors = {
+    'arabic': Color(0xFF4DB6AC),
+    'malayalam': Color(0xFF9CCC65),
+    'english': Color(0xFF64B5F6),
+    'urdu': Color(0xFFFFB74D),
+    'others': Color(0xFFAAAAAA),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final color = AppTheme.langColors[language] ?? AppTheme.langColors['others']!;
+    final color = _langColors[language] ?? _langColors['others']!;
     final label = _labels[language] ?? language.substring(0, 3).toUpperCase();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -61,7 +68,7 @@ class LangBadge extends StatelessWidget {
       ),
       child: Text(label, style: TextStyle(
         color: color, fontSize: 9, fontWeight: FontWeight.w700,
-        fontFamily: 'Outfit', letterSpacing: 0.5,
+        fontFamily: 'Roboto', letterSpacing: 0.5,
       )),
     );
   }
@@ -95,59 +102,61 @@ class TrackListItem extends StatelessWidget {
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: isPlaying
-            ? BoxDecoration(
-                color: AppTheme.accentFaint,
-                borderRadius: BorderRadius.circular(10),
-              )
-            : null,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        color: isPlaying ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
         child: Row(children: [
           // Artwork + playing overlay
           Stack(alignment: Alignment.center, children: [
             TrackArtwork(url: track.coverArt, size: 50, borderRadius: 8),
             if (isPlaying)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 50, height: 50,
-                  color: Colors.black.withAlpha(110),
-                  child: const Icon(Icons.pause_rounded, color: AppTheme.accent, size: 22),
+              Container(
+                width: 50, height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: const Icon(Icons.pause_rounded, color: Colors.white, size: 22),
               ),
           ]),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           // Title + artist
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(track.title, style: TextStyle(
-              fontFamily: 'Outfit', fontSize: 14, fontWeight: FontWeight.w600,
-              color: isPlaying ? AppTheme.accent : AppTheme.textPrimary,
+              fontFamily: 'Roboto', fontSize: 14, fontWeight: FontWeight.w600,
+              color: isPlaying ? Colors.white : Colors.white,
             ), maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             Text(track.artist, style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 12, color: AppTheme.textSecondary,
+              fontFamily: 'Roboto', fontSize: 13, color: Color(0xFFAAAAAA),
             ), maxLines: 1, overflow: TextOverflow.ellipsis),
           ])),
           const SizedBox(width: 6),
           if (showLangBadge) ...[
             LangBadge(language: track.language),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
           ],
           // Like button
           GestureDetector(
             onTap: onLike,
-            child: Icon(
-              isLiked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-              color: isLiked ? AppTheme.liked : AppTheme.textDim,
-              size: 20,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Icon(
+                isLiked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                color: isLiked ? Colors.white : const Color(0xFF666666),
+                size: 20,
+              ),
             ),
           ),
           if (onMore != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: onMore,
-              child: const Icon(Icons.more_vert_rounded, color: AppTheme.textDim, size: 20),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(4.0),
+                child: Icon(Icons.more_vert_rounded, color: Color(0xFF666666), size: 20),
+              ),
             ),
           ],
         ]),

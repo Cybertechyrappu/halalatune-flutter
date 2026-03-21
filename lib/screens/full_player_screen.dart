@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +5,6 @@ import '../providers/player_provider.dart';
 import '../providers/library_provider.dart';
 import '../services/download_service.dart';
 import '../models/track.dart';
-import '../theme/app_theme.dart';
 
 class FullPlayerScreen extends StatefulWidget {
   const FullPlayerScreen({super.key});
@@ -26,9 +24,6 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
   double _dragY = 0;
   static const double _kDismissThreshold = 150;
 
-  // Tabs: 0=Up Next  1=Lyrics  2=Related
-  int _tab = 0;
-
   @override
   void initState() {
     super.initState();
@@ -44,6 +39,44 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
     _pageCtrl.dispose();
     _artCtrl.dispose();
     super.dispose();
+  }
+
+  void _showLyricsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.65,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, scrollCtrl) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(children: [
+            const SizedBox(height: 12),
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF666666), borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            const Text('Lyrics', style: TextStyle(fontFamily: 'Roboto', fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                children: const [
+                  Text('Lyrics are currently unavailable for this track.\n\n\n\n\n\n(Feature coming soon)',
+                    style: TextStyle(fontFamily: 'Roboto', fontSize: 16, height: 2.0, color: Color(0xFFAAAAAA)),
+                    textAlign: TextAlign.center,
+                  )
+                ],
+              ),
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 
   @override
@@ -72,17 +105,15 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
           child: Opacity(
             opacity: opacity,
             child: Scaffold(
-              backgroundColor: AppTheme.bg,
-              body: Stack(children: [
-                // Blurred album art background
-                _BlurredBackground(coverArt: track.coverArt),
-                // Main content
-                SafeArea(
-                  child: Column(children: [
-                    _Header(track: track),
-                    // artwork (main area, 70% of remaining height)
-                    SizedBox(
-                      height: size.height * 0.40,
+              backgroundColor: Colors.black,
+              body: SafeArea(
+                child: Column(children: [
+                  _Header(track: track),
+                  // artwork
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, bottom: 24),
+                    child: SizedBox(
+                      height: size.height * 0.38,
                       child: _ArtworkCarousel(
                         track: track,
                         player: player,
@@ -90,61 +121,64 @@ class _FullPlayerScreenState extends State<FullPlayerScreen>
                         artScale: _artScale,
                       ),
                     ),
-                    // Track info + like row
-                    _TrackInfoRow(track: track, player: player),
-                    const SizedBox(height: 4),
-                    // Progress bar
-                    _ProgressBar(player: player),
-                    const SizedBox(height: 8),
-                    // Main controls (prev, play, next)
-                    _Controls(player: player),
-                    const SizedBox(height: 8),
-                    // Secondary controls (shuffle, repeat, download, queue)
-                    _SecondaryControls(track: track, player: player),
-                    const SizedBox(height: 4),
-                    // Bottom tabs (Up Next / Lyrics / Related) — takes remaining space
-                    Expanded(
-                      child: _BottomTabs(
-                        tab: _tab,
-                        onTap: (t) => setState(() => _tab = t),
-                        player: player,
-                      ),
+                  ),
+                  // Track info + like row
+                  _TrackInfoRow(track: track, player: player),
+                  const SizedBox(height: 24),
+                  // Progress bar
+                  _ProgressBar(player: player),
+                  const SizedBox(height: 16),
+                  // Main controls (prev, play, next, shuffle, repeat)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.shuffle_rounded, color: player.isShuffle ? Colors.white : const Color(0xFF666666), size: 24),
+                          onPressed: player.toggleShuffle,
+                          splashRadius: 24,
+                        ),
+                        _Controls(player: player),
+                        IconButton(
+                          icon: Icon(
+                            player.repeatMode == RepeatMode.one
+                                ? Icons.repeat_one_rounded
+                                : Icons.repeat_rounded,
+                            color: player.repeatMode != RepeatMode.none ? Colors.white : const Color(0xFF666666),
+                            size: 24,
+                          ),
+                          onPressed: player.toggleRepeat,
+                          splashRadius: 24,
+                        ),
+                      ],
                     ),
-                  ]),
-                ),
-              ]),
+                  ),
+                  const SizedBox(height: 16),
+                  // Download button
+                  _SecondaryControls(track: track, player: player),
+                  const Spacer(),
+                  // Lyrics sliding panel imitation
+                  GestureDetector(
+                    onTap: () => _showLyricsSheet(context),
+                    child: Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text('Lyrics', style: TextStyle(fontFamily: 'Roboto', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ]),
+              ),
             ),
           ),
         ),
       );
     });
-  }
-}
-
-// ── Blurred Background ──────────────────────────────────────────────────────────
-class _BlurredBackground extends StatelessWidget {
-  final String? coverArt;
-  const _BlurredBackground({this.coverArt});
-
-  @override
-  Widget build(BuildContext context) {
-    if (coverArt == null || !coverArt!.startsWith('http')) {
-      return Container(color: AppTheme.bg);
-    }
-    return SizedBox.expand(
-      child: Stack(fit: StackFit.expand, children: [
-        ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-          child: CachedNetworkImage(
-            imageUrl: coverArt!,
-            fit: BoxFit.cover,
-            memCacheWidth: 150, // Low res is fine for blur
-            errorWidget: (_, __, ___) => Container(color: AppTheme.bg),
-          ),
-        ),
-        Positioned.fill(child: Container(color: Colors.black.withAlpha(180))),
-      ]),
-    );
   }
 }
 
@@ -156,31 +190,22 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(children: [
-        IconButton(
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 30, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.pop(context),
-          splashRadius: 20,
-        ),
-        Expanded(
-          child: Column(children: [
-            const Text('NOW PLAYING', style: TextStyle(
-              fontFamily: 'Outfit', fontSize: 10, fontWeight: FontWeight.w600,
-              color: AppTheme.textDim, letterSpacing: 2,
-            )),
-            Text(track.artist, style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 13, fontWeight: FontWeight.w500,
-              color: AppTheme.textSecondary,
-            ), maxLines: 1, overflow: TextOverflow.ellipsis),
-          ]),
-        ),
-        IconButton(
-          icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textSecondary),
-          onPressed: () {},
-          splashRadius: 20,
-        ),
-      ]),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+            splashRadius: 24,
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+            onPressed: () {},
+            splashRadius: 24,
+          ),
+        ]
+      ),
     );
   }
 }
@@ -196,19 +221,19 @@ class _ArtworkCarousel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: ScaleTransition(
         scale: artScale,
         child: AspectRatio(
           aspectRatio: 1,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(8),
             child: (track.coverArt != null && track.coverArt!.startsWith('http'))
                 ? CachedNetworkImage(
                     imageUrl: track.coverArt!,
                     fit: BoxFit.cover,
-                    memCacheWidth: 900, // High res for main artwork
-                    placeholder: (_, __) => Container(color: AppTheme.bgElevated),
+                    memCacheWidth: 900,
+                    placeholder: (_, __) => Container(color: const Color(0xFF1E1E1E)),
                     errorWidget: (_, __, ___) => _placeholder(),
                   )
                 : _placeholder(),
@@ -219,8 +244,8 @@ class _ArtworkCarousel extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-    color: AppTheme.bgElevated,
-    child: const Icon(Icons.music_note_rounded, color: AppTheme.textDim, size: 60),
+    color: const Color(0xFF1E1E1E),
+    child: const Icon(Icons.music_note_rounded, color: Color(0xFF666666), size: 60),
   );
 }
 
@@ -233,33 +258,45 @@ class _TrackInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 12, 0),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(track.title, style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 18, fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary,
-            ), maxLines: 1, overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 2),
-            Text(track.artist, style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 13, color: AppTheme.textSecondary,
-            ), maxLines: 1, overflow: TextOverflow.ellipsis),
-          ]),
-        ),
-        Consumer<LibraryProvider>(builder: (_, lib, __) {
-          final liked = lib.isLiked(track.id);
-          return IconButton(
-            icon: Icon(
-              liked ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-              color: liked ? AppTheme.liked : AppTheme.textSecondary,
-              size: 24,
-            ),
-            onPressed: () => lib.toggleLike(track.id),
-            splashRadius: 20,
-          );
-        }),
-      ]),
+      padding: const EdgeInsets.fromLTRB(28, 16, 16, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(track.title, style: const TextStyle(
+                fontFamily: 'Roboto', fontSize: 24, fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ), maxLines: 1, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text(track.artist, style: const TextStyle(
+                fontFamily: 'Roboto', fontSize: 16, color: Color(0xFFAAAAAA),
+              ), maxLines: 1, overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+          Consumer<LibraryProvider>(builder: (_, lib, __) {
+            final liked = lib.isLiked(track.id);
+            return Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.thumb_down_alt_outlined, color: Colors.white, size: 28),
+                  onPressed: () {},
+                  splashRadius: 24,
+                ),
+                IconButton(
+                  icon: Icon(
+                    liked ? Icons.thumb_up_alt_rounded : Icons.thumb_up_alt_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                  onPressed: () => lib.toggleLike(track.id),
+                  splashRadius: 24,
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
     );
   }
 }
@@ -281,14 +318,14 @@ class _ProgressBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(children: [
         SliderTheme(
-          data: const SliderThemeData(
-            thumbShape: RoundSliderThumbShape(enabledThumbRadius: 5),
-            overlayShape: RoundSliderOverlayShape(overlayRadius: 14),
-            trackHeight: 3,
-            activeTrackColor: AppTheme.accent,
-            inactiveTrackColor: AppTheme.surfaceHigh,
-            thumbColor: AppTheme.accent,
-            overlayColor: Colors.white12,
+          data: SliderThemeData(
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+            trackHeight: 2,
+            activeTrackColor: Colors.white,
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.2),
+            thumbColor: Colors.white,
+            overlayColor: Colors.white.withValues(alpha: 0.1),
           ),
           child: Slider(
             value: player.progress.clamp(0.0, 1.0),
@@ -299,10 +336,10 @@ class _ProgressBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text(_fmt(player.position), style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 11, color: AppTheme.textDim,
+              fontFamily: 'Roboto', fontSize: 12, color: Color(0xFFAAAAAA),
             )),
             Text(_fmt(player.duration), style: const TextStyle(
-              fontFamily: 'Outfit', fontSize: 11, color: AppTheme.textDim,
+              fontFamily: 'Roboto', fontSize: 12, color: Color(0xFFAAAAAA),
             )),
           ]),
         ),
@@ -318,36 +355,38 @@ class _Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+    return Row(mainAxisSize: MainAxisSize.min, children: [
       IconButton(
-        icon: const Icon(Icons.skip_previous_rounded, color: AppTheme.textPrimary, size: 40),
+        icon: const Icon(Icons.skip_previous_rounded, color: Colors.white, size: 48),
         onPressed: player.playPrev,
-        splashRadius: 24,
+        splashRadius: 32,
       ),
+      const SizedBox(width: 16),
       // Play / Pause big button
       GestureDetector(
         onTap: player.togglePlayPause,
         child: Container(
-          width: 68, height: 68,
+          width: 76, height: 76,
           decoration: const BoxDecoration(
-            color: AppTheme.accent,
+            color: Colors.white,
             shape: BoxShape.circle,
           ),
           child: player.isLoading
               ? const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                  padding: EdgeInsets.all(22),
+                  child: CircularProgressIndicator(color: Colors.black, strokeWidth: 3),
                 )
               : Icon(
                   player.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: Colors.black, size: 36,
+                  color: Colors.black, size: 48,
                 ),
         ),
       ),
+      const SizedBox(width: 16),
       IconButton(
-        icon: const Icon(Icons.skip_next_rounded, color: AppTheme.textPrimary, size: 40),
+        icon: const Icon(Icons.skip_next_rounded, color: Colors.white, size: 48),
         onPressed: player.playNext,
-        splashRadius: 24,
+        splashRadius: 32,
       ),
     ]);
   }
@@ -366,38 +405,14 @@ class _SecondaryControls extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        // Shuffle
-        IconButton(
-          icon: Icon(Icons.shuffle_rounded,
-            color: player.isShuffle ? AppTheme.accent : AppTheme.textDim, size: 20),
-          onPressed: player.toggleShuffle,
-          splashRadius: 18,
-        ),
-        // Repeat
-        IconButton(
-          icon: Icon(
-            player.repeatMode == RepeatMode.one
-                ? Icons.repeat_one_rounded
-                : Icons.repeat_rounded,
-            color: player.repeatMode != RepeatMode.none ? AppTheme.accent : AppTheme.textDim,
-            size: 20,
-          ),
-          onPressed: player.toggleRepeat,
-          splashRadius: 18,
-        ),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         // Download
         _DownloadButton(track: track, dl: dl, status: status),
-        // Share (placeholder)
-        IconButton(
-          icon: const Icon(Icons.share_rounded, color: AppTheme.textDim, size: 20),
-          onPressed: () {},
-          splashRadius: 18,
-        ),
       ]),
     );
   }
 }
+
 
 class _DownloadButton extends StatelessWidget {
   final Track track;
@@ -411,162 +426,46 @@ class _DownloadButton extends StatelessWidget {
       case DownloadStatus.notDownloaded:
       case DownloadStatus.error:
         return IconButton(
-          icon: Icon(Icons.download_rounded,
-            color: status == DownloadStatus.error ? AppTheme.danger : AppTheme.textDim,
-            size: 20),
+          icon: Icon(Icons.arrow_circle_down_rounded,
+            color: status == DownloadStatus.error ? Colors.red : Colors.white,
+            size: 30),
           onPressed: () {
             dl.download(track);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Downloading "${track.title}"…',
-                style: const TextStyle(fontFamily: 'Outfit'))),
+                style: const TextStyle(fontFamily: 'Roboto'))),
             );
           },
-          splashRadius: 18,
+          splashRadius: 24,
         );
       case DownloadStatus.downloading:
         return SizedBox(
-          width: 40, height: 40,
+          width: 48, height: 48,
           child: Center(
             child: GestureDetector(
               onTap: () => dl.cancel(track.id),
               child: Stack(alignment: Alignment.center, children: [
                 SizedBox(
-                  width: 24, height: 24,
+                  width: 28, height: 28,
                   child: CircularProgressIndicator(
                     value: dl.progressOf(track.id),
                     strokeWidth: 2,
-                    color: AppTheme.accent,
+                    color: Colors.white,
                   ),
                 ),
-                const Icon(Icons.close_rounded, color: AppTheme.accent, size: 12),
+                const Icon(Icons.close_rounded, color: Colors.white, size: 14),
               ]),
             ),
           ),
         );
       case DownloadStatus.downloaded:
         return IconButton(
-          icon: const Icon(Icons.download_done_rounded, color: AppTheme.accent, size: 20),
+          icon: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 30),
           onPressed: () => dl.deleteDownload(track.id),
-          splashRadius: 18,
+          splashRadius: 24,
         );
     }
   }
 }
 
-// ── Bottom Tabs (Up Next / Lyrics / Related) ─────────────────────────────────────
-class _BottomTabs extends StatelessWidget {
-  final int tab;
-  final ValueChanged<int> onTap;
-  final PlayerProvider player;
-  const _BottomTabs({required this.tab, required this.onTap, required this.player});
-
-  @override
-  Widget build(BuildContext context) {
-    final tabs = ['Up next', 'Lyrics', 'Related'];
-    return Column(children: [
-      SizedBox(
-        height: 36,
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          for (int i = 0; i < tabs.length; i++)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: GestureDetector(
-                onTap: () => onTap(i),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text(tabs[i], style: TextStyle(
-                    fontFamily: 'Outfit', fontSize: 12,
-                    fontWeight: i == tab ? FontWeight.w700 : FontWeight.w400,
-                    color: i == tab ? AppTheme.accent : AppTheme.textDim,
-                  )),
-                  const SizedBox(height: 3),
-                  // FIX: use only decoration OR color, not both
-                  if (i == tab)
-                    Container(
-                      width: 20, height: 2,
-                      decoration: BoxDecoration(
-                        color: AppTheme.accent,
-                        borderRadius: BorderRadius.circular(1),
-                      ),
-                    ),
-                ]),
-              ),
-            ),
-        ]),
-      ),
-      Container(height: 0.5, color: AppTheme.surfaceHigh),
-      const SizedBox(height: 4),
-      // Tab content — expand to fill remaining space
-      Expanded(
-        child: tab == 0
-            ? _QueueList(player: player)
-            : tab == 1
-                ? _LyricsPlaceholder()
-                : _RelatedPlaceholder(),
-      ),
-    ]);
-  }
-}
-
-class _QueueList extends StatelessWidget {
-  final PlayerProvider player;
-  const _QueueList({required this.player});
-
-  @override
-  Widget build(BuildContext context) {
-    final queue = player.queue;
-    final current = player.currentIndex;
-    final upcoming = queue.sublist(current + 1 < queue.length ? current + 1 : queue.length);
-    if (upcoming.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(12),
-        child: Center(child: Text('No more tracks in queue',
-          style: TextStyle(fontFamily: 'Outfit', fontSize: 12, color: AppTheme.textDim))),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      physics: const BouncingScrollPhysics(),
-      itemCount: upcoming.length,
-      itemBuilder: (_, i) {
-        final t = upcoming[i];
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: (t.coverArt != null && t.coverArt!.startsWith('http'))
-                  ? CachedNetworkImage(imageUrl: t.coverArt!, width: 36, height: 36, memCacheWidth: 108, fit: BoxFit.cover)
-                  : Container(width: 36, height: 36, color: AppTheme.bgElevated,
-                      child: const Icon(Icons.music_note_rounded, size: 16, color: AppTheme.textDim)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(t.title, style: const TextStyle(fontFamily: 'Outfit', fontSize: 12,
-                fontWeight: FontWeight.w500, color: AppTheme.textPrimary), maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(t.artist, style: const TextStyle(fontFamily: 'Outfit', fontSize: 11,
-                color: AppTheme.textDim), maxLines: 1, overflow: TextOverflow.ellipsis),
-            ])),
-          ]),
-        );
-      },
-    );
-  }
-}
-
-class _LyricsPlaceholder extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.all(12),
-    child: Center(child: Text('Lyrics coming soon',
-      style: TextStyle(fontFamily: 'Outfit', fontSize: 12, color: AppTheme.textDim))),
-  );
-}
-
-class _RelatedPlaceholder extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.all(12),
-    child: Center(child: Text('Related tracks coming soon',
-      style: TextStyle(fontFamily: 'Outfit', fontSize: 12, color: AppTheme.textDim))),
-  );
-}
+// ── EOF ────────────────────────────────────────────────────────────────────────

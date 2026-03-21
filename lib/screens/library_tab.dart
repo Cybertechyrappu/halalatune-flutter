@@ -5,7 +5,7 @@ import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
-import '../theme/app_theme.dart';
+import '../services/download_service.dart';
 import '../widgets/track_widgets.dart';
 
 class LibraryTab extends StatefulWidget {
@@ -35,19 +35,19 @@ class _LibraryTabState extends State<LibraryTab> with SingleTickerProviderStateM
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         return Scaffold(
-          backgroundColor: AppTheme.bg,
+          backgroundColor: Colors.black,
           appBar: AppBar(
-            backgroundColor: AppTheme.bg,
-            title: const Text('Library', style: TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.w700, fontFamily: 'Outfit')),
+            backgroundColor: Colors.black,
+            title: const Text('Library', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -0.3, fontFamily: 'Roboto')),
             bottom: TabBar(
               controller: _tabController,
-              labelColor: AppTheme.accent,
-              unselectedLabelColor: AppTheme.textDim,
+              labelColor: Colors.white,
+              unselectedLabelColor: const Color(0xFF666666),
               indicator: const UnderlineTabIndicator(
-                borderSide: BorderSide(color: AppTheme.accent, width: 2),
+                borderSide: BorderSide(color: Colors.white, width: 2),
               ),
-              labelStyle: const TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600, fontSize: 14),
-              unselectedLabelStyle: const TextStyle(fontFamily: 'Outfit', fontSize: 14),
+              labelStyle: const TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w600, fontSize: 14),
+              unselectedLabelStyle: const TextStyle(fontFamily: 'Roboto', fontSize: 14),
               tabs: const [
                 Tab(text: 'Downloads'),
                 Tab(text: 'Playlists'),
@@ -73,17 +73,42 @@ class _LibraryTabState extends State<LibraryTab> with SingleTickerProviderStateM
 class _DownloadsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.download_rounded, color: AppTheme.textDim, size: 60),
-          SizedBox(height: 16),
-          Text('No downloaded songs yet.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16, fontFamily: 'Outfit')),
-          SizedBox(height: 8),
-          Text('Tap ⋮ on any song to save it for offline.', style: TextStyle(color: AppTheme.textDim, fontSize: 13, fontFamily: 'Outfit')),
-        ],
-      ),
+    return Consumer2<DownloadService, PlayerProvider>(
+      builder: (context, dl, player, _) {
+        final tracks = dl.downloadedTracks;
+        if (tracks.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.download_rounded, color: Color(0xFF666666), size: 60),
+                SizedBox(height: 16),
+                Text('No downloaded songs yet.', style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 16, fontFamily: 'Roboto')),
+                SizedBox(height: 8),
+                Text('Tap the download icon on any song to save it for offline.', style: TextStyle(color: Color(0xFF666666), fontSize: 13, fontFamily: 'Roboto')),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.only(top: 8, bottom: 100),
+          itemCount: tracks.length,
+          itemBuilder: (_, i) {
+            final t = tracks[i];
+            return TrackListItem(
+              track: t,
+              isPlaying: player.currentTrack?.id == t.id && player.isPlaying,
+              isLiked: context.select<LibraryProvider, bool>((lib) => lib.isLiked(t.id)),
+              onTap: () {
+                final auth = context.read<AuthProvider>();
+                player.setUserId(auth.user?.uid);
+                player.playTrack(newQueue: List.from(tracks), index: i);
+              },
+              onLike: () => context.read<LibraryProvider>().toggleLike(t.id),
+            );
+          },
+        );
+      }
     );
   }
 }
@@ -128,7 +153,7 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.accent, strokeWidth: 2));
+      return const Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2));
     }
 
     return Column(
@@ -140,8 +165,9 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
             label: const Text('Create Playlist'),
             onPressed: () => _showCreatePlaylist(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.accent,
+              backgroundColor: Colors.white,
               foregroundColor: Colors.black,
+              elevation: 0,
               minimumSize: const Size(double.infinity, 46),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -153,11 +179,11 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.queue_music_rounded, color: AppTheme.textDim, size: 60),
+                      Icon(Icons.queue_music_rounded, color: Color(0xFF666666), size: 60),
                       SizedBox(height: 16),
-                      Text('No playlists yet.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16, fontFamily: 'Outfit')),
+                      Text('No playlists yet.', style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 16, fontFamily: 'Roboto')),
                       SizedBox(height: 8),
-                      Text('Create your first playlist above.', style: TextStyle(color: AppTheme.textDim, fontSize: 13, fontFamily: 'Outfit')),
+                      Text('Create your first playlist above.', style: TextStyle(color: Color(0xFF666666), fontSize: 13, fontFamily: 'Roboto')),
                     ],
                   ),
                 )
@@ -183,7 +209,7 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
 
   Widget _sectionLabel(String text) => Padding(
     padding: const EdgeInsets.fromLTRB(2, 12, 2, 8),
-    child: Text(text, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'Outfit')),
+    child: Text(text, style: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'Roboto')),
   );
 
   void _showCreatePlaylist(BuildContext context) {
@@ -193,7 +219,7 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.bgElevated,
+      backgroundColor: const Color(0xFF1E1E1E),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setModalState) => Padding(
@@ -207,30 +233,30 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
             children: [
               Row(
                 children: [
-                  const Text('New Playlist', style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Outfit')),
+                  const Text('New Playlist', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Roboto')),
                   const Spacer(),
-                  IconButton(icon: const Icon(Icons.close_rounded, color: AppTheme.textDim), onPressed: () => Navigator.pop(ctx)),
+                  IconButton(icon: const Icon(Icons.close_rounded, color: Color(0xFF666666)), onPressed: () => Navigator.pop(ctx)),
                 ],
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: AppTheme.textPrimary, fontFamily: 'Outfit'),
-                decoration: const InputDecoration(hintText: 'Playlist name'),
+                style: const TextStyle(color: Colors.white, fontFamily: 'Roboto'),
+                decoration: const InputDecoration(hintText: 'Playlist name', hintStyle: TextStyle(color: Color(0xFF666666))),
                 maxLength: 60,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: descCtrl,
-                style: const TextStyle(color: AppTheme.textPrimary, fontFamily: 'Outfit'),
-                decoration: const InputDecoration(hintText: 'Description (optional)'),
+                style: const TextStyle(color: Colors.white, fontFamily: 'Roboto'),
+                decoration: const InputDecoration(hintText: 'Description (optional)', hintStyle: TextStyle(color: Color(0xFF666666))),
                 maxLines: 2,
                 maxLength: 200,
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('Visibility:', style: TextStyle(color: AppTheme.textSecondary, fontFamily: 'Outfit')),
+                  const Text('Visibility:', style: TextStyle(color: Color(0xFFAAAAAA), fontFamily: 'Roboto')),
                   const SizedBox(width: 12),
                   _visButton(ctx, setModalState, 'Public', 'public', visibility, (v) { visibility = v; }),
                   const SizedBox(width: 8),
@@ -255,12 +281,13 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
                   _load();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accent,
+                  backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
+                  elevation: 0,
                   minimumSize: const Size(double.infinity, 46),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Create Playlist', style: TextStyle(fontFamily: 'Outfit', fontWeight: FontWeight.w600)),
+                child: const Text('Create Playlist', style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -276,11 +303,11 @@ class _PlaylistsViewState extends State<_PlaylistsView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.accent.withValues(alpha: 0.15) : AppTheme.surface,
+          color: isActive ? Colors.white.withValues(alpha: 0.15) : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isActive ? AppTheme.accent : Colors.transparent),
+          border: Border.all(color: isActive ? Colors.white : Colors.transparent),
         ),
-        child: Text(label, style: TextStyle(color: isActive ? AppTheme.accent : AppTheme.textSecondary, fontSize: 13, fontFamily: 'Outfit')),
+        child: Text(label, style: TextStyle(color: isActive ? Colors.white : const Color(0xFFAAAAAA), fontSize: 13, fontFamily: 'Roboto')),
       ),
     );
   }
@@ -300,7 +327,7 @@ class _PlaylistCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.bgCard,
+          color: const Color(0xFF141414), // was bgCard
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -309,7 +336,7 @@ class _PlaylistCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               child: (coverArt.isNotEmpty && coverArt.startsWith('http'))
                   ? CachedNetworkImage(imageUrl: coverArt, width: 52, height: 52, memCacheWidth: 156, fit: BoxFit.cover)
-                  : Container(width: 52, height: 52, color: AppTheme.surface, child: const Icon(Icons.music_note_rounded, color: AppTheme.textDim)),
+                  : Container(width: 52, height: 52, color: const Color(0xFF1E1E1E), child: const Icon(Icons.music_note_rounded, color: Color(0xFF666666))),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -319,18 +346,18 @@ class _PlaylistCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(pl['name'] ?? '', style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'Outfit'), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        child: Text(pl['name'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'Roboto'), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                       if (pl['visibility'] == 'private')
-                        const Icon(Icons.lock_rounded, color: AppTheme.textDim, size: 14),
+                        const Icon(Icons.lock_rounded, color: Color(0xFF666666), size: 14),
                     ],
                   ),
                   const SizedBox(height: 3),
-                  Text('${pl['trackCount'] ?? 0} songs', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontFamily: 'Outfit')),
+                  Text('${pl['trackCount'] ?? 0} songs', style: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 12, fontFamily: 'Roboto')),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.textDim),
+            const Icon(Icons.chevron_right_rounded, color: Color(0xFF666666)),
           ],
         ),
       ),
@@ -350,11 +377,11 @@ class _LikedView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.favorite_outline_rounded, color: AppTheme.liked, size: 60),
+                Icon(Icons.favorite_outline_rounded, color: Colors.white, size: 60),
                 SizedBox(height: 16),
-                Text('No liked songs yet.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 16, fontFamily: 'Outfit')),
+                Text('No liked songs yet.', style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 16, fontFamily: 'Roboto')),
                 SizedBox(height: 8),
-                Text('Tap the heart on any song to save it here.', style: TextStyle(color: AppTheme.textDim, fontSize: 13, fontFamily: 'Outfit')),
+                Text('Tap the heart on any song to save it here.', style: TextStyle(color: Color(0xFF666666), fontSize: 13, fontFamily: 'Roboto')),
               ],
             ),
           );

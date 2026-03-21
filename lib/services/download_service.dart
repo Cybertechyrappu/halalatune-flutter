@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
@@ -17,20 +18,28 @@ class DownloadService extends ChangeNotifier {
   final Map<String, double> _progress = {};
   final Map<String, String> _localPaths = {};
   final Map<String, CancelToken> _tokens = {};
+  final Map<String, Track> _downloadedTracks = {};
 
   DownloadStatus statusOf(String id) => _status[id] ?? DownloadStatus.notDownloaded;
   double progressOf(String id) => _progress[id] ?? 0;
   String? localPath(String id) => _localPaths[id];
+  List<Track> get downloadedTracks => _downloadedTracks.values.toList();
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys().where((k) => k.startsWith('dl_')).toList();
+    final keys = prefs.getKeys().where((k) => k.startsWith('dl_') && !k.startsWith('dl_meta_')).toList();
     for (final k in keys) {
       final id = k.substring(3);
-      final path = prefs.getString(k)!;
-      if (await File(path).exists()) {
+      final path = prefs.getString(k);
+      if (path != null && await File(path).exists()) {
         _localPaths[id] = path;
         _status[id] = DownloadStatus.downloaded;
+        final metaStr = prefs.getString('dl_meta_$id');
+        if (metaStr != null) {
+          try {
+            _downloadedTracks[id] = Track.fromMap(jsonDecode(metaStr));
+          } catch (_) {}
+        }
       }
     }
     notifyListeners();
@@ -68,8 +77,10 @@ class DownloadService extends ChangeNotifier {
       _localPaths[track.id] = file.path;
       _status[track.id] = DownloadStatus.downloaded;
       _progress[track.id] = 1.0;
+      _downloadedTracks[track.id] = track;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('dl_${track.id}', file.path);
+      await prefs.setString('dl_meta_${track.id}', jsonEncode(track.toMap()));
     } on DioException catch (e) {
       if (CancelToken.isCancel(e)) {
         _status[track.id] = DownloadStatus.notDownloaded;
@@ -101,8 +112,10 @@ class DownloadService extends ChangeNotifier {
     }
     _status.remove(id);
     _progress.remove(id);
+    _downloadedTracks.remove(id);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('dl_$id');
+    await prefs.remove('dl_meta_$id');
     notifyListeners();
   }
 

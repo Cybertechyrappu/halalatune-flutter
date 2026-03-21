@@ -7,27 +7,35 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:159242961546:android:65bdcd9c3fee61c661e373",
+        "mobilesdk_app_id": "1:159242961546:android:36906007b08870ac61e373",
         "android_client_info": {
           "package_name": "com.halaltune.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "159242961546-REPLACE_WITH_YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+          "client_id": "159242961546-1mrdctdh13ndksru9i9t1ub0nfbmcab9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.halaltune.app",
+            "certificate_hash": "b1be627566a2ef81ba02866d6e7e6698737e7aff"
+          }
+        },
+        {
+          "client_id": "159242961546-hbnt8hv0jv5jr4fd96vqm8uk1tbke0vo.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyD7bc74wJSIRi1_BhDqFjEMG2mE3noBm4g"
+          "current_key": "AIzaSyCTzemnqcpsxlRkWiRWIrCiUHwcs8nUavM"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "159242961546-REPLACE_WITH_YOUR_WEB_CLIENT_ID.apps.googleusercontent.com",
+              "client_id": "159242961546-hbnt8hv0jv5jr4fd96vqm8uk1tbke0vo.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

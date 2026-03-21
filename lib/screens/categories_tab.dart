@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/library_provider.dart';
 import '../providers/player_provider.dart';
 import '../providers/auth_provider.dart';
-import '../theme/app_theme.dart';
 import '../widgets/track_widgets.dart';
 
 const _kCategories = [
@@ -31,24 +30,25 @@ class _CategoriesTabState extends State<CategoriesTab> {
         if (!lib.tracksLoaded) {
           return const Center(
               child: CircularProgressIndicator(
-                  color: AppTheme.accent, strokeWidth: 2));
+                  color: Colors.white, strokeWidth: 2));
         }
 
         return CustomScrollView(
           slivers: [
             const SliverAppBar(
               pinned: false,
-              backgroundColor: AppTheme.bg,
+              backgroundColor: Colors.black,
               title: Text('Categories',
                   style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      fontFamily: 'Outfit')),
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                      fontFamily: 'Roboto')),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             ..._buildSections(lib, player),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         );
       },
@@ -70,32 +70,28 @@ class _CategoriesTabState extends State<CategoriesTab> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Container(
-                width: 4,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: AppTheme.langColors[key] ?? AppTheme.accent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 10),
               Text(label,
                   style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 18,
+                      color: Colors.white,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      fontFamily: 'Outfit')),
+                      letterSpacing: 0.3,
+                      fontFamily: 'Roboto')),
               const Spacer(),
               if (tracks.length > 5)
                 GestureDetector(
                   onTap: () => setState(() => _expanded[key] = !isExpanded),
                   child: Text(
-                    isExpanded ? 'Show less' : 'See all',
-                    style: TextStyle(
-                        color: AppTheme.langColors[key] ?? AppTheme.accent,
+                    isExpanded ? 'Show less' : 'Show all',
+                    style: const TextStyle(
+                        color: Color(0xFFAAAAAA),
                         fontSize: 13,
-                        fontFamily: 'Outfit'),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                        fontFamily: 'Roboto'),
                   ),
                 ),
             ],
