@@ -25,7 +25,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - yourmail@example.com
+          - rappuplayzpro@gmail.com
         notify:
           success: true
           failure: false
