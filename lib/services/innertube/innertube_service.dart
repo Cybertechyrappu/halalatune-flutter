@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'models/innertube_models.dart';
+import 'youtube_auth_service.dart';
 
 /// YouTube InnerTube API Service
 /// 
@@ -16,13 +17,16 @@ class InnerTubeService {
   static const String _apiKey = 'AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30';
 
   final http.Client _client;
-  
+  final YoutubeAuthService? _authService;
+
   // Context data
   String? _visitorData;
-  
+
   final InnerTubeClient _clientInfo = InnerTubeClient();
 
-  InnerTubeService({http.Client? client}) : _client = client ?? http.Client();
+  InnerTubeService({http.Client? client, YoutubeAuthService? authService}) 
+      : _client = client ?? http.Client(),
+        _authService = authService;
 
   // ── Search ─────────────────────────────────────────────────────────────────
 
@@ -226,21 +230,38 @@ class InnerTubeService {
     return context;
   }
 
+  /// Build headers for InnerTube API requests
+  Future<Map<String, String>> _buildHeaders() async {
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'User-Agent': _clientInfo.userAgent,
+      'X-YouTube-Client-Name': '67',
+      'X-YouTube-Client-Version': _clientInfo.clientVersion,
+      'Origin': 'https://music.youtube.com',
+      'Referer': 'https://music.youtube.com/',
+    };
+
+    // Add authorization header if authenticated
+    if (_authService != null && _authService!.isAuthenticated) {
+      final token = await _authService!.getValidToken();
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+        debugPrint('Using authenticated InnerTube request');
+      }
+    }
+
+    return headers;
+  }
+
   /// POST request to InnerTube endpoint
   Future<Map<String, dynamic>?> _post(String endpoint, Map<String, dynamic> body) async {
     try {
       final uri = Uri.parse('$_baseUrl/$endpoint?key=$_apiKey');
-      
+      final headers = await _buildHeaders();
+
       final response = await _client.post(
         uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': _clientInfo.userAgent,
-          'X-YouTube-Client-Name': '67',
-          'X-YouTube-Client-Version': _clientInfo.clientVersion,
-          'Origin': 'https://music.youtube.com',
-          'Referer': 'https://music.youtube.com/',
-        },
+        headers: headers,
         body: jsonEncode(body),
       );
 

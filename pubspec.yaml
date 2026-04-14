@@ -27,6 +27,9 @@ dependencies:
   # Google Sign-In
   google_sign_in: ^6.2.1
 
+  # WebView for Google OAuth
+  webview_flutter: ^4.8.0
+
   # UI helpers
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0

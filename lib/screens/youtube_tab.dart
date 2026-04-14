@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../services/innertube/innertube_service.dart';
-import '../../services/innertube/halal_filter.dart';
+import '../../services/innertube/youtube_auth_service.dart';
 import '../../services/innertube/models/innertube_models.dart' show YouTubeTrack;
 import '../../models/track.dart';
 import '../../providers/player_provider.dart';
@@ -21,8 +21,8 @@ class YouTubeTab extends StatefulWidget {
 }
 
 class _YouTubeTabState extends State<YouTubeTab> with AutomaticKeepAliveClientMixin {
-  final InnerTubeService _innertube = InnerTubeService();
-  final HalalFilter _halalFilter = HalalFilter(level: FilterLevel.moderate);
+  late InnerTubeService _innertube;
+  late YoutubeAuthService _authService;
 
   bool _isLoading = true;
   List<Track> _browseResults = [];
@@ -34,12 +34,15 @@ class _YouTubeTabState extends State<YouTubeTab> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
+    _authService = context.read<YoutubeAuthService>();
+    _innertube = InnerTubeService(authService: _authService);
     _loadBrowseResults();
   }
 
   @override
   void dispose() {
     _innertube.dispose();
+    // Don't dispose _authService here since it's shared
     super.dispose();
   }
 
@@ -53,15 +56,14 @@ class _YouTubeTabState extends State<YouTubeTab> with AutomaticKeepAliveClientMi
       // Browse YouTube Music home page (FEMUSIC_HOME)
       final sections = await _innertube.browse(browseId: 'FEmusic_home');
 
-      // Flatten and filter results
+      // Flatten and convert results
       final List<YouTubeTrack> allTracks = [];
       for (final section in sections) {
         allTracks.addAll(section.tracks);
       }
 
-      // Apply halal filter
-      final filtered = _halalFilter.filterTracks(allTracks);
-      final tracks = filtered.map((YouTubeTrack yt) => Track.fromYouTubeTrack(yt)).toList();
+      // Convert to app Track models
+      final tracks = allTracks.map((YouTubeTrack yt) => Track.fromYouTubeTrack(yt)).toList();
 
       if (mounted) {
         setState(() {
@@ -204,7 +206,7 @@ class _YouTubeTabState extends State<YouTubeTab> with AutomaticKeepAliveClientMi
                       Icon(Icons.music_off_rounded, size: 48, color: AppTheme.textDim),
                       SizedBox(height: 16),
                       Text(
-                        'No halal content available',
+                        'No results available',
                         style: TextStyle(color: AppTheme.textSecondary, fontFamily: 'Outfit'),
                       ),
                     ],

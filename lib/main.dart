@@ -7,6 +7,7 @@ import 'package:audio_service/audio_service.dart';
 import 'providers/auth_provider.dart' as auth_p;
 import 'providers/library_provider.dart';
 import 'providers/player_provider.dart';
+import 'services/innertube/youtube_auth_service.dart';
 import 'screens/auth_screen.dart';
 import 'screens/main_shell.dart';
 import 'theme/app_theme.dart';
@@ -113,7 +114,13 @@ class HalalTuneApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => auth_p.AuthProvider()),
         ChangeNotifierProvider(create: (_) => LibraryProvider()),
-        ChangeNotifierProvider(create: (_) => PlayerProvider(audioHandler: audioHandler)),
+        ChangeNotifierProvider(create: (_) => YoutubeAuthService()),
+        ChangeNotifierProvider(
+          create: (ctx) => PlayerProvider(
+            audioHandler: audioHandler,
+            authService: ctx.read<YoutubeAuthService>(),
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'HalalTune',

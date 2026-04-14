@@ -7,6 +7,7 @@ import 'package:audio_service/audio_service.dart';
 import '../models/track.dart';
 import '../services/firestore_service.dart';
 import '../services/innertube/innertube_service.dart';
+import '../services/innertube/youtube_auth_service.dart';
 import '../main.dart' show HalalTuneAudioHandler;
 
 enum RepeatMode { none, one, all }
@@ -15,7 +16,8 @@ class PlayerProvider extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   final FirestoreService _db = FirestoreService();
   final HalalTuneAudioHandler _handler;
-  final InnerTubeService _innertube = InnerTubeService();
+  final YoutubeAuthService _authService;
+  late final InnerTubeService _innertube;
 
   List<Track> _queue = [];
   int _currentIndex = -1;
@@ -40,8 +42,19 @@ class PlayerProvider extends ChangeNotifier {
   Duration get duration => _duration;
   double get progress =>
       _duration.inMilliseconds > 0 ? _position.inMilliseconds / _duration.inMilliseconds : 0.0;
+  
+  // YouTube auth status
+  bool get isYouTubeAuthenticated => _authService.isAuthenticated;
+  String? get youtubeUserEmail => _authService.userEmail;
 
-  PlayerProvider({required HalalTuneAudioHandler audioHandler}) : _handler = audioHandler {
+  PlayerProvider({
+    required HalalTuneAudioHandler audioHandler,
+    required YoutubeAuthService authService,
+  })  : _handler = audioHandler,
+        _authService = authService {
+    // Initialize InnerTube with auth service
+    _innertube = InnerTubeService(authService: _authService);
+    
     // Register self with the handler so media button events reach us
     _handler.registerPlayer(this);
     _initAudioSession();
@@ -63,6 +76,24 @@ class PlayerProvider extends ChangeNotifier {
   }
 
   void setUserId(String? uid) => _currentUserId = uid;
+
+  // ── YouTube authentication ────────────────────────────────────────────────
+
+  /// Sign in to YouTube Music API
+  Future<bool> signInToYouTube({required String authCode, String? email}) async {
+    return await _authService.signInWithGoogle(authCode: authCode, email: email);
+  }
+
+  /// Sign out from YouTube Music API
+  Future<void> signOutOfYouTube() async {
+    await _authService.signOut();
+    notifyListeners();
+  }
+
+  /// Get YouTube auth access token
+  Future<String?> getYouTubeToken() async {
+    return await _authService.getValidToken();
+  }
 
   Future<void> _initAudioSession() async {
     final session = await AudioSession.instance;
@@ -269,6 +300,7 @@ class PlayerProvider extends ChangeNotifier {
   @override
   void dispose() {
     _streamTimer?.cancel();
+    _authService.dispose();
     _innertube.dispose();
     _player.dispose();
     super.dispose();

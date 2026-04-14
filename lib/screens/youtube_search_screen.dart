@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../services/innertube/innertube_service.dart';
-import '../../services/innertube/halal_filter.dart';
+import '../../services/innertube/youtube_auth_service.dart';
 import '../../services/innertube/models/innertube_models.dart' show YouTubeTrack;
 import '../../models/track.dart';
 import '../../providers/player_provider.dart';
@@ -20,18 +20,25 @@ class YouTubeSearchScreen extends StatefulWidget {
 
 class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final InnerTubeService _innertube = InnerTubeService();
-  final HalalFilter _halalFilter = HalalFilter(level: FilterLevel.moderate);
+  late InnerTubeService _innertube;
+  late YoutubeAuthService _authService;
 
   List<Track> _results = [];
   bool _isSearching = false;
   String _searchQuery = '';
-  int _filteredCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = context.read<YoutubeAuthService>();
+    _innertube = InnerTubeService(authService: _authService);
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
     _innertube.dispose();
+    // Don't dispose _authService since it's shared
     super.dispose();
   }
 
@@ -42,20 +49,14 @@ class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
       _isSearching = true;
       _searchQuery = query;
       _results = [];
-      _filteredCount = 0;
     });
 
     try {
       // Search YouTube Music
       final List<YouTubeTrack> ytTracks = await _innertube.search(query: query);
 
-      // Apply halal filter
-      final beforeFilter = ytTracks.length;
-      final filtered = _halalFilter.filterTracks(ytTracks);
-      _filteredCount = beforeFilter - filtered.length;
-
       // Convert to app Track models
-      final tracks = filtered.map((YouTubeTrack yt) => Track.fromYouTubeTrack(yt)).toList();
+      final tracks = ytTracks.map((YouTubeTrack yt) => Track.fromYouTubeTrack(yt)).toList();
 
       if (mounted) {
         setState(() {
@@ -194,7 +195,7 @@ class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
             Icon(Icons.search_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             const Text(
-              'Search YouTube Music for halal audio',
+              'Search YouTube Music',
               style: TextStyle(
                 color: AppTheme.textSecondary,
                 fontFamily: 'Outfit',
@@ -203,31 +204,11 @@ class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Content is filtered for halal compliance',
+              'Find your favorite Islamic songs and nasheeds',
               style: TextStyle(
                 color: AppTheme.textDim,
                 fontFamily: 'Outfit',
                 fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Filter level indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.shield_rounded, color: Colors.green, size: 16),
-                  SizedBox(width: 6),
-                  Text(
-                    'Halal Filter: Moderate',
-                    style: TextStyle(color: Colors.green, fontFamily: 'Outfit', fontSize: 12),
-                  ),
-                ],
               ),
             ),
           ],
@@ -243,23 +224,13 @@ class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
             Icon(Icons.music_off_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             const Text(
-              'No halal results found',
+              'No results found',
               style: TextStyle(
                 color: AppTheme.textSecondary,
                 fontFamily: 'Outfit',
                 fontSize: 16,
               ),
             ),
-            const SizedBox(height: 8),
-            if (_filteredCount > 0)
-              Text(
-                '$_filteredCount track(s) filtered out',
-                style: const TextStyle(
-                  color: AppTheme.textDim,
-                  fontFamily: 'Outfit',
-                  fontSize: 13,
-                ),
-              ),
           ],
         ),
       );
@@ -277,7 +248,6 @@ class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
           track: track,
           index: index,
           onPlay: () => _playTrack(track, index, Provider.of<PlayerProvider>(context, listen: false)),
-          filteredCount: _filteredCount,
         );
       },
     );
@@ -289,13 +259,11 @@ class _YouTubeTrackTile extends StatelessWidget {
   final Track track;
   final int index;
   final VoidCallback onPlay;
-  final int filteredCount;
 
   const _YouTubeTrackTile({
     required this.track,
     required this.index,
     required this.onPlay,
-    required this.filteredCount,
   });
 
   @override
