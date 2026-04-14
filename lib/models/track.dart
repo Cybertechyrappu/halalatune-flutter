@@ -1,4 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/innertube/models/innertube_models.dart';
+
+/// Source type for the track
+enum TrackSource {
+  firestore,  // From Firebase Firestore (original app data)
+  youtube,    // From YouTube InnerTube API
+}
 
 class Track {
   final String id;
@@ -15,6 +22,17 @@ class Track {
   final String? lyricsProviderUrl;
   final String? lyricsRedirectUrl;
   final DateTime? createdAt;
+  
+  // YouTube-specific fields
+  final TrackSource source;
+  final String? youtubeVideoId;     // YouTube video ID (for InnerTube)
+  final Duration? duration;          // Track duration
+  final bool isExplicit;             // YouTube explicit flag
+  final List<String>? categories;    // YouTube categories
+  
+  // Resolved stream URL (fetched from InnerTube player endpoint)
+  /// Stream URL resolved from InnerTube player endpoint.
+  String? streamUrl;
 
   Track({
     required this.id,
@@ -31,7 +49,46 @@ class Track {
     this.lyricsProviderUrl,
     this.lyricsRedirectUrl,
     this.createdAt,
+    this.source = TrackSource.firestore,
+    this.youtubeVideoId,
+    this.duration,
+    this.isExplicit = false,
+    this.categories,
   });
+
+  /// Get the stream URL to use for playback
+  /// For YouTube tracks, this returns the resolved stream URL from InnerTube
+  String get playableUrl => streamUrl ?? url;
+
+  /// Create a Track from a YouTube InnerTube result
+  factory Track.fromYouTubeTrack(YouTubeTrack ytTrack) {
+    // Generate a unique ID for YouTube tracks (prefix with 'yt_' to avoid conflicts)
+    final id = 'yt_${ytTrack.videoId}';
+    
+    // Build thumbnail URL with higher resolution
+    String? coverArt = ytTrack.thumbnailUrl;
+    if (coverArt != null) {
+      // Try to get higher quality thumbnail
+      coverArt = coverArt
+          .replaceAll('w60-h60', 'w300-h300')
+          .replaceAll('w120-h120', 'w300-h300')
+          .replaceAll('w226-h226', 'w300-h300');
+    }
+
+    return Track(
+      id: id,
+      title: ytTrack.title,
+      artist: ytTrack.artist ?? 'Unknown Artist',
+      url: '',  // Will be resolved via InnerTube player endpoint
+      coverArt: coverArt,
+      language: 'youtube',
+      source: TrackSource.youtube,
+      youtubeVideoId: ytTrack.videoId,
+      duration: ytTrack.duration,
+      isExplicit: ytTrack.isExplicit,
+      categories: ytTrack.categories,
+    );
+  }
 
   factory Track.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -56,6 +113,7 @@ class Track {
       lyricsProviderUrl: data['lyricsProviderUrl'],
       lyricsRedirectUrl: data['lyricsRedirectUrl'],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      source: TrackSource.firestore,
     );
   }
 

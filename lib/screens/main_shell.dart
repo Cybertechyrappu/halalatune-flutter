@@ -9,6 +9,7 @@ import 'home_tab.dart';
 import 'categories_tab.dart';
 import 'library_tab.dart';
 import 'account_tab.dart';
+import 'youtube_tab.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -24,6 +25,7 @@ class _MainShellState extends State<MainShell> {
   static const _tabs = [
     HomeTab(),
     CategoriesTab(),
+    YouTubeTab(),
     LibraryTab(),
     AccountTab(),
   ];
@@ -89,6 +91,7 @@ class _AmoledNavBar extends StatelessWidget {
   static const _items = [
     (Icons.home_rounded,    'Home'),
     (Icons.grid_view_rounded, 'Categories'),
+    (Icons.play_circle_rounded, 'YouTube'),
     (Icons.library_music_rounded, 'Library'),
     (Icons.person_rounded,  'Account'),
   ];

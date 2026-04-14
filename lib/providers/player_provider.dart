@@ -6,6 +6,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:audio_service/audio_service.dart';
 import '../models/track.dart';
 import '../services/firestore_service.dart';
+import '../services/innertube/innertube_service.dart';
 import '../main.dart' show HalalTuneAudioHandler;
 
 enum RepeatMode { none, one, all }
@@ -14,6 +15,7 @@ class PlayerProvider extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   final FirestoreService _db = FirestoreService();
   final HalalTuneAudioHandler _handler;
+  final InnerTubeService _innertube = InnerTubeService();
 
   List<Track> _queue = [];
   int _currentIndex = -1;
@@ -147,7 +149,27 @@ class PlayerProvider extends ChangeNotifier {
     _pushMediaItem();
 
     try {
-      await _player.setUrl(track.url);
+      // For YouTube tracks, resolve stream URL if not already resolved
+      String playUrl = track.playableUrl;
+      if (track.source == TrackSource.youtube && 
+          track.youtubeVideoId != null && 
+          (playUrl.isEmpty || track.streamUrl == null)) {
+        
+        debugPrint('Resolving YouTube stream URL for: ${track.title}');
+        final audioUrl = await _innertube.getAudioUrl(track.youtubeVideoId!);
+        
+        if (audioUrl != null) {
+          track.streamUrl = audioUrl;
+          playUrl = audioUrl;
+        } else {
+          debugPrint('Failed to resolve YouTube stream URL');
+          _isLoading = false;
+          notifyListeners();
+          return;
+        }
+      }
+
+      await _player.setUrl(playUrl);
       await _player.play();
       _pushMediaItem(); // re-push with duration once known
     } catch (e) {
@@ -156,14 +178,16 @@ class PlayerProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
-    // Firestore stream count after 10 s
-    _streamTimer?.cancel();
-    final tid = track.id;
-    _streamTimer = Timer(const Duration(seconds: 10), () {
-      if (currentTrack?.id == tid && _currentUserId != null) {
-        _db.incrementStream(tid, _currentUserId!).catchError((_) {});
-      }
-    });
+    // Firestore stream count after 10 s (only for firestore tracks)
+    if (track.source == TrackSource.firestore) {
+      _streamTimer?.cancel();
+      final tid = track.id;
+      _streamTimer = Timer(const Duration(seconds: 10), () {
+        if (currentTrack?.id == tid && _currentUserId != null) {
+          _db.incrementStream(tid, _currentUserId!).catchError((_) {});
+        }
+      });
+    }
   }
 
   Future<void> togglePlayPause() async {
@@ -245,6 +269,7 @@ class PlayerProvider extends ChangeNotifier {
   @override
   void dispose() {
     _streamTimer?.cancel();
+    _innertube.dispose();
     _player.dispose();
     super.dispose();
   }
