@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
 import '../services/innertube/youtube_auth_service.dart';
@@ -176,7 +175,7 @@ class _GoogleLoginScreenState extends State<GoogleLoginScreen> {
                         color: Colors.red.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 16),
-                      Text(
+                      const Text(
                         'Authentication Error',
                         style: TextStyle(
                           color: Colors.red,

@@ -242,8 +242,8 @@ class InnerTubeService {
     };
 
     // Add authorization header if authenticated
-    if (_authService != null && _authService!.isAuthenticated) {
-      final token = await _authService!.getValidToken();
+    if (_authService != null && _authService.isAuthenticated) {
+      final token = await _authService.getValidToken();
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
         debugPrint('Using authenticated InnerTube request');
