@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Halal Filter Strings -->
+    <string name="halal_filter">Halal Filter</string>
+    <string name="halal_filter_description">Filter content to show only halal music</string>
+    <string name="halal_filter_level">Filter Level</string>
+    <string name="halal_filter_strict">Strict</string>
+    <string name="halal_filter_strict_desc">Maximum filtering - only clearly halal content passes</string>
+    <string name="halal_filter_moderate">Moderate</string>
+    <string name="halal_filter_moderate_desc">Balanced filtering - blocks obvious haram content</string>
+    <string name="halal_filter_light">Light</string>
+    <string name="halal_filter_light_desc">Minimal filtering - only blocks explicit content</string>
+    <string name="halal_filter_disabled">Disabled</string>
+    <string name="halal_filter_disabled_desc">Show all content without filtering</string>
+    <string name="halal_filter_custom_keywords">Custom Keywords</string>
+    <string name="halal_filter_add_keyword">Add keyword</string>
+    <string name="halal_filter_remove_keyword">Remove keyword</string>
+    <string name="halal_filter_keyword_hint">Enter keyword to filter</string>
+    <string name="halal_filter_blocked_count">%d content items filtered</string>
+    <string name="halal_filter_active">Halal filter active</string>
+    <string name="halal_filter_inactive">Halal filter inactive</string>
+
+    <!-- Halal Categories -->
+    <string name="halal_recommended">Halal Recommended</string>
+    <string name="halal_arabic">Arabic Islamic</string>
+    <string name="halal_nasheed">Nasheed</string>
+    <string name="halal_quran">Quran Recitation</string>
+    <string name="halal_islamic_song">Islamic Song</string>
+
+    <!-- Halal About -->
+    <string name="halal_about_title">About Halal Filter</string>
+    <string name="halal_about_description">Halalatune filters out content that doesn\'t align with Islamic principles. The filter checks for:\n\n• Explicit content\n• Alcohol and drug references\n• Gambling themes\n• Inappropriate content\n• Violence and harmful themes\n\nYou can customize the filter level and add your own keywords for a personalized experience.</string>
+
+    <!-- Halal Settings -->
+    <string name="halal_settings">Halal Settings</string>
+    <string name="halal_content_language">Halal Content Language</string>
+    <string name="halal_show_only_islamic">Show only Islamic content</string>
+    <string name="halal_auto_filter">Auto-filter search results</string>
+    <string name="halal_filter_history">Filter listening history</string>
+
+    <!-- Halal Info -->
+    <string name="halal_content_filtered">Content filtered by halal settings</string>
+    <string name="halal_content_shown">%d halal items shown</string>
+</resources>
